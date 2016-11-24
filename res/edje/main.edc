@@ -1,0 +1,85 @@
+collections {
+	base_scale: 2.6;
+
+	group { "Main";
+		parts {
+			rect {
+				desc { "bg";
+					color: 70 70 70 255;
+				}
+			}
+			rect { "upper.grid.bg";
+				desc { "default";
+					color: 25 25 25 255;
+					rel1.relative: 0.02 0.02;
+					min: 1005 335;
+					max: 1005 335;
+					align: 0.0 0.0;
+				}
+			}
+			rect { "lower.grid.bg";
+				desc { "default";
+					color: 25 25 25 255;
+					rel1.relative: 0.02 0.02;
+					rel2.relative: 1.0 0.98;
+					min: 1005 335;
+					max: 1005 335;
+					align: 0.0 1.0;
+				}
+
+			}
+			swallow { "upper.grid";
+				desc {
+					rel1.to: "upper.grid.bg";
+					rel2.to: "upper.grid.bg";
+				}
+			}
+			swallow { "lower.grid";
+				desc {
+					rel1.to: "lower.grid.bg";
+					rel2.to: "lower.grid.bg";
+				}
+			}
+			spacer { "pd.right";
+				desc {
+					min: 10 0;
+					max: 10 -1;
+					align: 1.0 0.5;
+				}
+			}
+			table { "menu";
+				desc {
+					min: 100 0;
+					max: 100 -1;
+					rel2 {
+						relative: 0.0 1.0;
+						to_x: "pd.right";
+					}
+				}
+
+			}
+			swallow { "btn.time.inc";
+				desc {
+
+				}
+			}
+			swallow { "btn.time.dec";
+				desc {
+
+				}
+			}
+			swallow { "btn.voltage.inc";
+				desc {
+
+				}
+			}
+			swallow { "btn.voltage.dec";
+				desc {
+
+				}
+
+			}
+		}
+	}
+
+}
