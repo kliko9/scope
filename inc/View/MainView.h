@@ -16,7 +16,10 @@ namespace view {
 		Evas_Object *grid2_ = nullptr;
 
 		void CreateContent();
+		void CreateMenu();
+		Evas_Object *CreateMenuButton(const char* name);
 		void CreateGrid();
 		static void LayoutResizeCb(void *data, Evas *e, Evas_Object *obj, void *event_info);
+		static void ButtonClickedCb(void *data, Evas_Object *obj, void *event_info);
 	};
 }

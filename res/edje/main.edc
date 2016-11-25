@@ -1,16 +1,33 @@
 collections {
 	base_scale: 2.6;
 
+	styles {
+		style {
+			name: "default_style";
+			base: "font=Tizen:style=Regular color=#FFFFFFFF font_size=30 ellipsis=1.0 align=center";
+		}
+	}
+
+	images {
+		image: "circle_movement_button_arrow_left.png" COMP;
+		image: "circle_movement_button_arrow_right.png" COMP;
+		image: "circle_movement_button_arrow_up.png" COMP;
+		image: "circle_movement_button_arrow_down.png" COMP;
+		image: "circle_movement_button_bg.png" COMP;
+		image: "default_bg.png" COMP;
+	}
+
 	group { "Main";
 		parts {
-			rect {
-				desc { "bg";
-					color: 70 70 70 255;
+			image { "bg";
+				desc {
+					//color: 70 70 70 255;
+					image.normal: "default_bg.png";
 				}
 			}
 			rect { "upper.grid.bg";
 				desc { "default";
-					color: 25 25 25 255;
+					color: 25 25 25 100;
 					rel1.relative: 0.02 0.02;
 					min: 1005 335;
 					max: 1005 335;
@@ -19,7 +36,7 @@ collections {
 			}
 			rect { "lower.grid.bg";
 				desc { "default";
-					color: 25 25 25 255;
+					color: 25 25 25 100;
 					rel1.relative: 0.02 0.02;
 					rel2.relative: 1.0 0.98;
 					min: 1005 335;
@@ -42,42 +59,157 @@ collections {
 			}
 			spacer { "pd.right";
 				desc {
-					min: 10 0;
-					max: 10 -1;
+					rel1.relative: 0.98 0.0;
 					align: 1.0 0.5;
 				}
 			}
-			table { "menu";
+			swallow { "menu";
 				desc {
-					min: 100 0;
-					max: 100 -1;
-					rel2 {
-						relative: 0.0 1.0;
-						to_x: "pd.right";
-					}
+					rel1 { relative: 1.02 0.02; to_x: "upper.grid"; };
+					rel2 { relative: 0.98 0.98; };
 				}
 
 			}
-			swallow { "btn.time.inc";
-				desc {
+		}
+	}
 
+	group { "MovementButton";
+		parts {
+			image { "bg";
+				desc {
+					image.normal: "circle_movement_button_bg.png";
+					color: 25 25 25 100;
 				}
 			}
-			swallow { "btn.time.dec";
+			image { "arrow.left";
 				desc {
-
+					image.normal: "circle_movement_button_arrow_left.png";
+					color: 92 198 217 255;
+					align: 0.0 0.5;
+					min: 70 110;
+					max: 70 110;
 				}
 			}
+			image { "arrow.up";
+				desc {
+					image.normal: "circle_movement_button_arrow_up.png";
+					color: 92 198 217 255;
+					align: 0.5 0.0;
+					min: 110 70;
+					max: 110 70;
+				}
+			}
+			image { "arrow.right";
+				desc {
+					image.normal: "circle_movement_button_arrow_right.png";
+					color: 92 198 217 255;
+					align: 1.0 0.5;
+					min: 70 110;
+					max: 70 110;
+				}
+			}
+			image { "arrow.down";
+				desc {
+					image.normal: "circle_movement_button_arrow_down.png";
+					color: 92 198 217 255;
+					align: 0.5 1.0;
+					min: 110 70;
+					max: 110 70;
+				}
+			}
+		}
+	}
+
+	group { "Menu";
+		parts {
 			swallow { "btn.voltage.inc";
 				desc {
-
+					rel1 { relative: 0.0 0.0; };
+					rel2 { relative: 0.5 0.12; };
 				}
 			}
 			swallow { "btn.voltage.dec";
 				desc {
-
+					rel1 { relative: 0.5 0.0; };
+					rel2 { relative: 1.0 0.12; };
 				}
+			}
+			swallow { "btn.time.inc";
+				desc {
+					rel1 { relative: 0.0 0.12; };
+					rel2 { relative: 0.5 0.24; };
+				}
+			}
+			swallow { "btn.time.dec";
+				desc {
+					rel1 { relative: 0.5 0.12; };
+					rel2 { relative: 1.0 0.24; };
+				}
+			}
+			swallow { "btn.auto";
+				desc {
+					rel1 { relative: 0.0 0.24; };
+					rel2 { relative: 1.0 0.36; };
+				}
+			}
+			swallow { "btn.ch";
+				desc {
+					rel1 { relative: 0.0 0.36; };
+					rel2 { relative: 1.0 0.48; };
+				}
+			}
+			group { "btn.movement";
+				source: "MovementButton";
+				desc { "default";
+					min: 200 200;
+					max: 200 200;
+					align: 0.5 1.0;
+				}
+			}
+		}
+	}
 
+	group { "elm/button/base/scope";
+		data.item: "texts" "elm.text";
+		parts {
+			rect { "bg_frame";
+				desc { "default";
+					color: 25 25 25 50;
+				}
+				desc { "pressed";
+					color: 25 25 25 100;
+					inherit: "default";
+				}
+			}
+			textblock { "elm.text";
+				desc { "default";
+					text.style: "default_style";
+					align: 0.5 0.5;
+				}
+			}
+			rect { "bg";
+				desc { "default";
+					color: 25 25 25 50;
+					rel1 { to: "bg_frame"; offset: 2 2; };
+					rel2 { to: "bg_frame"; offset: -2 -2; };
+				}
+				desc { "pressed";
+					color: 255 0 0 255;
+					inherit: "default";
+				}
+			}
+			program {
+				signal: "mouse,down,*";
+				source: "bg";
+				action: STATE_SET "pressed";
+				target: "bg_frame";
+				target: "bg";
+				transition: DECEL 0.1;
+			}
+			program {
+				signal: "mouse,clicked,*";
+				source: "bg";
+				action: SIGNAL_EMIT "elm,action,click" "";
 			}
 		}
 	}
