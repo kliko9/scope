@@ -1,4 +1,5 @@
 #include "Controller/MainController.h"
+#include "Log.h"
 
 namespace controller {
 
@@ -8,9 +9,12 @@ MainController &MainController::GetInstance() {
 }
 
 MainController::MainController() {
+
 }
 
 void MainController::Init() {
+
+	DBG("Main controller initialization");
 }
 
 } // namespace controller

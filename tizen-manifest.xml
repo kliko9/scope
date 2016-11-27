@@ -5,4 +5,8 @@
 		<icon>scope.png</icon>
 		<label>scope</label>
 	</ui-application>
+    <privileges>
+        <privilege>http://tizen.org/privilege/bluetooth</privilege>
+        <privilege>http://tizen.org/privilege/appmanager.launch</privilege>
+    </privileges>
 </manifest>

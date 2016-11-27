@@ -1,4 +1,5 @@
 #!/bin/bash
+tizen clean
 tizen build-native -a arm
 #tizen build-native
 tizen package -t tpk -s kalim -- ./Debug
