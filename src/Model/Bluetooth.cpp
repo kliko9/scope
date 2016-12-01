@@ -12,32 +12,37 @@ Bluetooth::Bluetooth() {
 	int ret = bt_initialize();
 	if (ret != BT_ERROR_NONE) {
 		DBG("bt_initialize failed: %s", get_error_message(ret));
-		abort();
+		//abort();
+		return;
 	}
 
 	bt_adapter_state_e btState;
 	ret = bt_adapter_get_state(&btState);
 	if (ret != BT_ERROR_NONE) {
 		DBG("bt_initialize failed: %s", get_error_message(ret));
-		abort();
+		//abort();
+		return;
 	}
 
 	ret = bt_adapter_set_state_changed_cb(AdapterStateChangedCb, this);
 	if (ret != BT_ERROR_NONE) {
 		DBG("bt_adapter_set_state_changed_cb failed: %s", get_error_message(ret));
-		abort();
+		//abort();
+		return;
 	}
 
 	ret = bt_device_set_bond_created_cb(BondCreatedCb, this);
 	if (ret != BT_ERROR_NONE) {
 		DBG("bt_device_set_bond_created_cb failed: %s", get_error_message(ret));
-		abort();
+		//abort();
+		return;
 	}
 
 	if (btState != BT_ADAPTER_ENABLED) {
 		if (!BluetoothLaunchApp()) {
 			DBG("Bluetooth initialization failed");
-			abort();
+			//abort();
+			return;
 		}
 	}
 
@@ -45,8 +50,9 @@ Bluetooth::Bluetooth() {
 }
 
 Bluetooth::~Bluetooth() {
-
+	DBG("");
 	bt_deinitialize();
+	DBG("");
 }
 
 bool Bluetooth::BluetoothLaunchApp() {

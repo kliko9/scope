@@ -1,4 +1,5 @@
 #include <string>
+#include <cmath>
 
 #include "View/MainView.h"
 #include "main.h"
@@ -6,16 +7,29 @@
 
 namespace view {
 
-MainView::MainView() {
+MainView::MainView()
+{
 	CreateContent();
 }
 
-Evas_Object *MainView::GetEvasObject() {
+MainView::~MainView()
+{
+
+}
+
+Evas_Object *MainView::GetEvasObject()
+{
 	return win_;
 }
 
-void MainView::CreateContent() {
+void MainView::WinDeleteRequestCb(void *data, Evas_Object *obj, void *event_info)
+{
+	MainView *view = static_cast<MainView *>(data);
+	elm_win_lower(view->win_);
+}
 
+void MainView::CreateContent()
+{
 	DBG("Create main content");
 
 	win_ = elm_win_util_standard_add(PACKAGE, PACKAGE);
@@ -26,8 +40,8 @@ void MainView::CreateContent() {
 		elm_win_wm_rotation_available_rotations_set(win_, (const int *)(&rots), sizeof(rots)/sizeof(rots[0]));
 	}
 
-	evas_object_smart_callback_add(win_, "delete,request", nullptr, NULL);
-	eext_object_event_callback_add(win_, EEXT_CALLBACK_BACK, nullptr, NULL);
+	evas_object_smart_callback_add(win_, "delete,request", WinDeleteRequestCb, this);
+	eext_object_event_callback_add(win_, EEXT_CALLBACK_BACK, WinDeleteRequestCb, this);
 	elm_win_indicator_mode_set(win_, ELM_WIN_INDICATOR_SHOW);
 	elm_win_indicator_opacity_set(win_, ELM_WIN_INDICATOR_OPAQUE);
 
@@ -60,7 +74,8 @@ void MainView::CreateContent() {
 	evas_object_event_callback_add(layout_, EVAS_CALLBACK_RESIZE, LayoutResizeCb, this);
 }
 
-void MainView::CreateMenu() {
+void MainView::CreateMenu()
+{
 
 	Evas_Object *menu = elm_layout_add(layout_);
 	std::string resourcePath = std::string(app_get_resource_path());
@@ -75,8 +90,8 @@ void MainView::CreateMenu() {
 	evas_object_size_hint_weight_set(menu, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(menu, EVAS_HINT_FILL, EVAS_HINT_FILL);
 
-	evas_object_show(menu);
-	elm_object_part_content_set(layout_, "menu", menu);
+	//evas_object_show(menu);
+	//elm_object_part_content_set(layout_, "menu", menu);
 
 	elm_theme_overlay_add(NULL, resourcePath.c_str());
 
@@ -97,14 +112,15 @@ void MainView::CreateMenu() {
 
 }
 
-void MainView::ButtonClickedCb(void *data, Evas_Object *obj, void *event_info) {
+void MainView::ButtonClickedCb(void *data, Evas_Object *obj, void *event_info)
+{
 	DBG("");
 
 
 }
 
-Evas_Object *MainView::CreateMenuButton(const char *name) {
-
+Evas_Object *MainView::CreateMenuButton(const char *name)
+{
 	Evas_Object *button = elm_button_add(layout_);
 
 	evas_object_size_hint_weight_set(button, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
@@ -122,26 +138,23 @@ Evas_Object *MainView::CreateMenuButton(const char *name) {
 	return button;
 }
 
-void MainView::LayoutResizeCb(void *data, Evas *e, Evas_Object *obj, void *event_info) {
-
+void MainView::LayoutResizeCb(void *data, Evas *e, Evas_Object *obj, void *event_info)
+{
 	MainView *view = static_cast<MainView *>(data);
 
-	view->CreateGrid();
+	view->CreateBg();
+	view->CreateTrace();
 }
 
-
-void MainView::CreateGrid() {
+void MainView::CreateBg()
+{
 
 	static cairo_t *cairo_grid_;
 	static cairo_surface_t *surface_grid_;
 
-	if (grid1_) {
-		evas_object_del(grid1_);
-		grid1_ = nullptr;
-	}
-	if (grid2_) {
-		evas_object_del(grid2_);
-		grid2_ = nullptr;
+	if (grid_) {
+		evas_object_del(grid_);
+		grid_ = nullptr;
 	}
 	if (cairo_grid_) {
 		cairo_destroy(cairo_grid_);
@@ -152,68 +165,119 @@ void MainView::CreateGrid() {
 		surface_grid_ = nullptr;
 	}
 
-	static double dashes[] = {
-		10.0,
-		10.0
-	};
+	grid_ = evas_object_image_filled_add(evas_object_evas_get(layout_));
+	evas_object_image_alpha_set(grid_, EINA_TRUE);
+	evas_object_show(grid_);
 
-	grid1_ = evas_object_image_filled_add(evas_object_evas_get(layout_));
-	evas_object_image_alpha_set(grid1_, EINA_TRUE);
-	evas_object_show(grid1_);
+	evas_object_geometry_get(layout_, &lyX_, &lyY_, &lyW_, &lyH_);
+	DBG("Layout size: <%d %d> %dx%d", lyX_, lyY_, lyW_, lyH_);
 
-	grid2_ = evas_object_image_filled_add(evas_object_evas_get(layout_));
-	evas_object_image_alpha_set(grid2_, EINA_TRUE);
-	evas_object_show(grid2_);
+	lyW_ = 1000;
+	lyH_ = 600;
 
-	int lyW, lyH, lyX, lyY;
-	evas_object_geometry_get(layout_, &lyX, &lyY, &lyW, &lyH);
-	DBG("Layout size: <%d %d> %dx%d", lyX, lyY, lyW, lyH);
+	evas_object_geometry_set(grid_, 0, 0, lyW_, lyH_);
+	evas_object_image_size_set(grid_, lyW_, lyH_);
 
-	lyW = 1005;
-	lyH = 335;
-
-	evas_object_geometry_set(grid1_, 0, 0, lyW, lyH);
-	evas_object_image_size_set(grid1_, lyW, lyH);
-
-	evas_object_geometry_set(grid2_, 0, 0, lyW, lyH);
-	evas_object_image_size_set(grid2_, lyW, lyH);
-
-	surface_grid_ = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, lyW, lyH);
+	surface_grid_ = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, lyW_, lyH_);
 	cairo_grid_ = cairo_create(surface_grid_);
 
-	cairo_set_source_rgba(cairo_grid_, 1.0, 1.0, 1.0, 0.6);
-	cairo_set_line_width(cairo_grid_, 1.0);
-
-	cairo_set_dash(cairo_grid_, dashes, sizeof(dashes)/sizeof(dashes[0]), -20.0);
-
-	for (int i = 1; i < 5; ++i) {
-		cairo_move_to(cairo_grid_, lyX, lyY + lyH / 5 * i);
-		cairo_line_to(cairo_grid_, lyX + lyW, lyY + lyH / 5 * i);
-	}
-
-	for (int i = 1; i < 15; ++i) {
-		cairo_move_to(cairo_grid_, lyX + lyW / 15 * i, lyY);
-		cairo_line_to(cairo_grid_, lyX + lyW / 15 * i, lyY + lyH);
-	}
-
-	cairo_stroke(cairo_grid_);
-	cairo_surface_flush(surface_grid_);
+	CreateGrid(cairo_grid_, surface_grid_);
+	CreateXYAxis(cairo_grid_, surface_grid_);
 
 	unsigned char *imageData = cairo_image_surface_get_data(cairo_get_target(cairo_grid_));
-	evas_object_image_data_set(grid1_, imageData);
-	evas_object_image_data_update_add(grid1_, 0, 0, lyW, lyH);
+	evas_object_image_data_set(grid_, imageData);
+	evas_object_image_data_update_add(grid_, 0, 0, lyW_, lyH_);
 
-	evas_object_image_data_set(grid2_, imageData);
-	evas_object_image_data_update_add(grid2_, 0, 0, lyW, lyH);
+	evas_object_size_hint_weight_set(grid_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+	evas_object_size_hint_align_set(grid_, EVAS_HINT_FILL, EVAS_HINT_FILL);
 
-	evas_object_size_hint_weight_set(grid1_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-	evas_object_size_hint_align_set(grid1_, EVAS_HINT_FILL, EVAS_HINT_FILL);
+	elm_object_part_content_set(layout_, "grid", grid_);
+}
 
-	evas_object_size_hint_weight_set(grid2_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-	evas_object_size_hint_align_set(grid2_, EVAS_HINT_FILL, EVAS_HINT_FILL);
+void MainView::CreateGrid(cairo_t *cairo, cairo_surface_t *surface)
+{
+	const double dashes[] = {
+		8.33
+	};
 
-	elm_object_part_content_set(layout_, "upper.grid", grid1_);
-	elm_object_part_content_set(layout_, "lower.grid", grid2_);
+	cairo_set_source_rgba(cairo, 1.0, 1.0, 1.0, 0.6);
+	cairo_set_line_width(cairo, 1.0);
+	cairo_set_dash(cairo, dashes, sizeof(dashes)/sizeof(dashes[0]), -4.16);
+	for (int i = 1; i < 6; ++i) {
+		cairo_move_to(cairo, lyX_, lyY_ + lyH_ / 6 * i);
+		cairo_line_to(cairo, lyX_ + lyW_, lyY_ + lyH_ / 6 * i);
+	}
+
+	for (int i = 1; i < 10; ++i) {
+		cairo_move_to(cairo, lyX_ + lyW_ / 10 * i, lyY_);
+		cairo_line_to(cairo, lyX_ + lyW_ / 10 * i, lyY_ + lyH_);
+	}
+
+	cairo_stroke(cairo);
+	cairo_surface_flush(surface);
+}
+
+void MainView::CreateXYAxis(cairo_t *cairo, cairo_surface_t *surface)
+{
+	cairo_set_line_width(cairo, 2.0);
+	cairo_set_dash(cairo, nullptr, 0, 0);
+	cairo_set_source_rgba(cairo, 0.8, 0.8, 0.8, 1.0);
+
+	cairo_move_to(cairo, lyX_ + lyW_/2.0, lyY_);
+	cairo_line_to(cairo, lyX_ + lyW_/2.0, lyY_ + lyH_);
+
+	cairo_move_to(cairo, lyX_, lyY_ + lyH_/2.0);
+	cairo_line_to(cairo, lyX_ + lyW_, lyY_ + lyH_/2.0);
+
+	cairo_stroke(cairo);
+	cairo_surface_flush(surface);
+}
+
+void MainView::CreateTrace()
+{
+	static cairo_t *cairo_trace_;
+	static cairo_surface_t *surface_trace_;
+
+	if (!trace_) {
+
+		trace_ = evas_object_image_filled_add(evas_object_evas_get(layout_));
+		evas_object_image_alpha_set(trace_, EINA_TRUE);
+
+		evas_object_show(trace_);
+	}
+	if (cairo_trace_) {
+		cairo_destroy(cairo_trace_);
+		cairo_trace_ = nullptr;
+	}
+	if (surface_trace_) {
+		cairo_surface_destroy(surface_trace_);
+		surface_trace_ = nullptr;
+	}
+
+	evas_object_geometry_set(trace_, 0, 0, lyW_, lyH_);
+	evas_object_image_size_set(trace_, lyW_, lyH_);
+
+	surface_trace_ = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, lyW_, lyH_);
+	cairo_trace_ = cairo_create(surface_trace_);
+
+	cairo_set_source_rgba(cairo_trace_, 1.0, 1.0, 0.2, 1.0);
+	cairo_set_line_width(cairo_trace_, 3.0);
+
+	cairo_move_to(cairo_trace_, lyX_, lyY_ + lyH_/2.0);
+	for (int i = 1; i < 361; i++)
+		cairo_line_to(cairo_trace_, lyX_ + lyW_*i/360.0, lyY_ + lyH_/2.0 - (std::sin(i*4 * M_PI/180)/2.0*lyH_/2.0));
+
+	cairo_stroke(cairo_trace_);
+	cairo_surface_flush(surface_trace_);
+
+	unsigned char *imageData = cairo_image_surface_get_data(cairo_get_target(cairo_trace_));
+	evas_object_image_data_set(trace_, imageData);
+	evas_object_image_data_update_add(trace_, 0, 0, lyW_, lyH_);
+
+	evas_object_size_hint_weight_set(trace_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+	evas_object_size_hint_align_set(trace_, EVAS_HINT_FILL, EVAS_HINT_FILL);
+
+	elm_object_part_content_set(layout_, "trace", trace_);
 }
 
 }

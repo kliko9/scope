@@ -21,40 +21,56 @@ collections {
 		parts {
 			image { "bg";
 				desc {
-					//color: 70 70 70 255;
 					image.normal: "default_bg.png";
 				}
 			}
-			rect { "upper.grid.bg";
+			rect { "grid.bg";
 				desc { "default";
 					color: 25 25 25 100;
-					rel1.relative: 0.02 0.02;
-					min: 1005 335;
-					max: 1005 335;
+					rel1.relative: 0.03 0.03;;
+					rel2.relative: 0.95 0.95;
+					min: 1000 600;
+					max: 1000 600;
 					align: 0.0 0.0;
 				}
 			}
-			rect { "lower.grid.bg";
+			rect { "horizontal.scroller";
 				desc { "default";
-					color: 25 25 25 100;
-					rel1.relative: 0.02 0.02;
-					rel2.relative: 1.0 0.98;
-					min: 1005 335;
-					max: 1005 335;
-					align: 0.0 1.0;
-				}
-
-			}
-			swallow { "upper.grid";
-				desc {
-					rel1.to: "upper.grid.bg";
-					rel2.to: "upper.grid.bg";
+					color: 25 25 25 50;
+					rel1 { relative: 0.0 1.0; to: "grid.bg"; };
+					rel2 { relative: 1.0 1.0; to_x: "grid.bg"; };
+					min: 0 80;
+					max: -1 80;
+					align: 0.5 0.0;
 				}
 			}
-			swallow { "lower.grid";
+			rect { "vertical.scroller";
+				desc { "default";
+					color: 25 25 25 50;
+					rel1 { relative: 1.0 0.0; to: "grid.bg"; };
+					rel2 { relative: 1.0 1.0; to_y: "grid.bg"; };
+					min: 80 0;
+					max: 80 -1;
+					align: 0.0 0.5;
+				}
+			}
+			rect { "scroller.filler";
+				desc { "default";
+					color: 25 25 25 50;
+					rel1 { relative: 1.0 1.0; to_x: "horizontal.scroller"; to_y: "vertical.scroller"; };
+					rel2 { relative: 1.0 1.0; to_x: "vertical.scroller"; to_y: "horizontal.scroller"; };
+				}
+			}
+			swallow { "grid";
 				desc {
-					rel1.to: "lower.grid.bg";
-					rel2.to: "lower.grid.bg";
+					rel1.to: "grid.bg";
+					rel2.to: "grid.bg";
+				}
+			}
+			swallow { "trace";
+				desc {
+					rel1.to: "grid";
+					rel2.to: "grid";
 				}
 			}
 			spacer { "pd.right";
@@ -63,13 +79,15 @@ collections {
 					align: 1.0 0.5;
 				}
 			}
+			/*
 			swallow { "menu";
 				desc {
-					rel1 { relative: 1.02 0.02; to_x: "upper.grid"; };
+					rel1 { relative: 1.02 0.02; to_x: "grid"; };
 					rel2 { relative: 0.98 0.98; };
 				}
 
 			}
+			*/
 		}
 	}
 
