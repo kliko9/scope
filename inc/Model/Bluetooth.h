@@ -2,20 +2,36 @@
 #define BLUETOOTH_H
 
 #include <bluetooth.h>
+#include <vector>
+#include <functional>
 
 namespace model {
 
 	class Bluetooth {
 	public:
+
+		enum class SignalType {
+			BT_SIGNAL_DATA_RECEIVED,
+			MAX
+		};
+
 		Bluetooth();
 		virtual ~Bluetooth();
+
+		void RegisterSignal(SignalType type, std::function<void(void *)> cb);
+		void UnregisterSignal(SignalType type);
 	private:
 		const char *uuid = "00001101-0000-1000-8000-00805F9B34FB";
 		int deviceSocketFD = -1;
 		int serverSocketFD = -1;
 
-		bool BluetoothLaunchApp();
-		bool BluetoothCreateSocket();
+		std::vector<std::function<void(void *)>> callbacks_
+			= std::vector<std::function<void(void *)>>((int)SignalType::MAX);
+
+		void EmitSignal(SignalType type, void *data);
+
+		bool LaunchApp();
+		bool CreateSocket();
 
 		static void AdapterStateChangedCb(int result,
 				bt_adapter_state_e adapterState,

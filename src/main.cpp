@@ -3,17 +3,6 @@
 #include "Controller/MainController.h"
 
 static void
-win_delete_request_cb(void *data, Evas_Object *obj, void *event_info)
-{
-	ui_app_exit();
-}
-
-static void
-win_back_cb(void *data, Evas_Object *obj, void *event_info)
-{
-}
-
-static void
 create_base_gui(void)
 {
 	controller::MainController::GetInstance().Init();

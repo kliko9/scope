@@ -39,14 +39,14 @@ Bluetooth::Bluetooth() {
 	}
 
 	if (btState != BT_ADAPTER_ENABLED) {
-		if (!BluetoothLaunchApp()) {
+		if (!LaunchApp()) {
 			DBG("Bluetooth initialization failed");
 			//abort();
 			return;
 		}
 	}
 
-	BluetoothCreateSocket();
+	CreateSocket();
 }
 
 Bluetooth::~Bluetooth() {
@@ -55,7 +55,7 @@ Bluetooth::~Bluetooth() {
 	DBG("");
 }
 
-bool Bluetooth::BluetoothLaunchApp() {
+bool Bluetooth::LaunchApp() {
 
 	DBG("Bluetooth launch app");
 
@@ -147,9 +147,11 @@ void Bluetooth::DataReceivedCb(bt_socket_received_data_s *data, void *userData) 
 	char reply[] = "Data received\n";
 
 	bt_socket_send_data(bt->serverSocketFD, reply, sizeof(reply));
+
+	bt->EmitSignal(SignalType::BT_SIGNAL_DATA_RECEIVED, data->data);
 }
 
-bool Bluetooth::BluetoothCreateSocket() {
+bool Bluetooth::CreateSocket() {
 
 	DBG("Bluetooth creating socket");
 
@@ -186,6 +188,27 @@ bool Bluetooth::BluetoothCreateSocket() {
 	}
 
 	return true;
+}
+
+void Bluetooth::RegisterSignal(SignalType type, std::function<void(void *)> cb)
+{
+	if (!cb) {
+		ERR("Callback function == NULL");
+		return;
+	}
+
+	callbacks_[(int)type] = cb;
+}
+
+void Bluetooth::UnregisterSignal(SignalType type)
+{
+	callbacks_[(int)type] = nullptr;
+}
+
+void Bluetooth::EmitSignal(SignalType type, void *data)
+{
+	if (callbacks_[(int)type])
+		callbacks_[(int)type](data);
 }
 
 } //namespace model

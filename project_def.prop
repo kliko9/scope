@@ -9,10 +9,10 @@ type = app
 profile = mobile-3.0
 
 # C/CPP Sources
-USER_SRCS = src/*.cpp src/View/*.cpp src/Model/*.cpp src/Presenter/*.cpp src/Controller/*.cpp
+USER_SRCS = src/View/*.cpp src/Controller/*.cpp src/main.cpp src/Model/*.cpp 
 
 # EDC Sources
-USER_EDCS = res/edje/*.edc
+USER_EDCS =  
 
 # PO Sources
 USER_POS = 
@@ -33,10 +33,10 @@ USER_OBJS =
 
 # User Includes
 ## C Compiler
-USER_C_INC_DIRS = inc 
+USER_C_INC_DIRS = 
 USER_INC_FILES = 
 ## C++ Compiler
-USER_CPP_INC_DIRS = 
+USER_CPP_INC_DIRS = inc 
 USER_CPP_INC_FILES = 
 
 USER_INC_DIRS = $(USER_C_INC_DIRS) $(USER_CPP_INC_DIRS)
@@ -45,12 +45,17 @@ USER_INC_DIRS = $(USER_C_INC_DIRS) $(USER_CPP_INC_DIRS)
 USER_LIB_DIRS = lib 
 
 # EDC Resource Path
-USER_EDCS_IMAGE_DIRS = res/edje/images
-USER_EDCS_SOUND_DIRS = 
-USER_EDCS_FONT_DIRS = 
+USER_EDCS_IMAGE_DIRS = ${OUTPUT_DIR} edje/images res/edje/images 
+USER_EDCS_SOUND_DIRS = ${OUTPUT_DIR} edje/sounds 
+USER_EDCS_FONT_DIRS = ${OUTPUT_DIR} edje/fonts 
 
 # EDC Flags
-USER_EXT_EDC_KEYS = 
+USER_EXT_EDC_KEYS = EDC0 
+
+USER_EXT_EDC0_EDCS = res/edje/main.edc 
+USER_EXT_EDC0_EDCS_IMAGE_DIRS = ${OUTPUT_DIR} edje/images res/edje/images 
+USER_EXT_EDC0_EDCS_SOUND_DIRS = ${OUTPUT_DIR} edje/sounds 
+USER_EXT_EDC0_EDCS_FONT_DIRS = ${OUTPUT_DIR} edje/fonts 
 
 # Resource Filter
 USER_RES_INCLUDE = 
