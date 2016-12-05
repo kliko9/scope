@@ -27,7 +27,7 @@ collections {
 			rect { "grid.bg";
 				desc { "default";
 					color: 25 25 25 100;
-					rel1.relative: 0.03 0.03;;
+					//rel1.relative: 0.03 0.03;
 					rel2.relative: 0.95 0.95;
 					min: 1000 600;
 					max: 1000 600;

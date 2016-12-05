@@ -1,3 +1,6 @@
+#include <cstdlib>
+#include <ctime>
+
 #include <app_control.h>
 
 #include "Model/Bluetooth.h"
@@ -138,17 +141,26 @@ void Bluetooth::SocketConnectionStateChangedCb(int result, bt_socket_connection_
 }
 
 void Bluetooth::DataReceivedCb(bt_socket_received_data_s *data, void *userData) {
-
 	Bluetooth *bt = static_cast<Bluetooth *>(userData);
 
-	DBG("Received data:");
-	DBG("%s", data->data);
+	char text[2000] = {0, };
+	int size = sizeof(text)/sizeof(text[0]);
 
-	char reply[] = "Data received\n";
+	DBG("Received data: %s", data->data);
 
-	bt_socket_send_data(bt->serverSocketFD, reply, sizeof(reply));
+	//char reply[] = "Data received\n";
+	std::srand(std::time(NULL));
+	for (int i = 0; i < size/2; i += 2) {
 
-	bt->EmitSignal(SignalType::BT_SIGNAL_DATA_RECEIVED, data->data);
+		int val = std::rand() % 4096 - 2048;
+
+		text[i] = (((val & (0x03FF << 6)) >> 6) | (1 << 7)) & ~(1 << 6);
+		text[i+1] = ((val & 0x03FF) | (1 << 7)) | (1 << 6);
+	}
+
+	//bt_socket_send_data(bt->serverSocketFD, reply, sizeof(reply));
+	//bt->EmitSignal(SignalType::BT_SIGNAL_DATA_RECEIVED, data->data);
+	bt->EmitSignal(SignalType::BT_SIGNAL_DATA_RECEIVED, text);
 }
 
 bool Bluetooth::CreateSocket() {

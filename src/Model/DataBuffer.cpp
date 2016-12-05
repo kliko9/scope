@@ -14,6 +14,7 @@ DataBuffer::DataBuffer()
 
 DataBuffer::~DataBuffer()
 {
+
 }
 
 void DataBuffer::DataWrite(unsigned short data)

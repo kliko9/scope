@@ -1,5 +1,4 @@
-#ifndef BLUETOOTH_H
-#define BLUETOOTH_H
+#pragma once
 
 #include <bluetooth.h>
 #include <vector>
@@ -46,5 +45,3 @@ namespace model {
 	};
 
 }
-
-#endif //BLUETOOTH_H

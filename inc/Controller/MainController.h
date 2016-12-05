@@ -1,3 +1,7 @@
+#pragma once
+
+#include <vector>
+
 #include "View/MainView.h"
 #include "Model/Bluetooth.h"
 #include "Model/DataInterpreter.h"
@@ -20,5 +24,7 @@ namespace controller {
 		void operator =(const MainController &) = delete;
 
 		void BtDataReceive(void *data);
+
+		std::vector<double> test;
 	};
 }

@@ -1,3 +1,5 @@
+#include <ctime>
+
 #include "Controller/MainController.h"
 #include "Log.h"
 
@@ -12,6 +14,7 @@ MainController::MainController() {
 
 	bluetooth_.RegisterSignal(model::Bluetooth::SignalType::BT_SIGNAL_DATA_RECEIVED,
 			[this](void *data){this->BtDataReceive(data);});
+
 }
 
 void MainController::Init() {
@@ -21,14 +24,32 @@ void MainController::Init() {
 
 void MainController::BtDataReceive(void *data) {
 
+	std::clock_t receive;
+	std::clock_t trace;
+
+	std::clock_t begin = std::clock();
+
 	if (!data) {
 		return;
 	}
 
-	char *text = static_cast<char *>(data);
+	char *receivedData = static_cast<char *>(data);
 
-	DBG("BtDataReceive controller cb: %s", text);
+	std::vector<double> buffer = data_.Interpret(receivedData);
+	if (buffer.size() < 1) {
+		ERR("Invalid data");
+		return;
+	}
 
+	receive = std::clock();
+
+	view_.CreateTrace(buffer);
+
+	trace = std::clock();
+
+	DBG("BENCHMARK:");
+	DBG("receiving: %f", (double)(receive - begin)/CLOCKS_PER_SEC);
+	DBG("drawing: %f", (double)(trace - receive)/CLOCKS_PER_SEC);
 }
 
 } // namespace controller

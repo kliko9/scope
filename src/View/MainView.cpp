@@ -1,5 +1,6 @@
 #include <string>
 #include <cmath>
+#include <ctime>
 
 #include "View/MainView.h"
 #include "main.h"
@@ -143,7 +144,7 @@ void MainView::LayoutResizeCb(void *data, Evas *e, Evas_Object *obj, void *event
 	MainView *view = static_cast<MainView *>(data);
 
 	view->CreateBg();
-	view->CreateTrace();
+	//view->CreateTrace();
 }
 
 void MainView::CreateBg()
@@ -169,13 +170,12 @@ void MainView::CreateBg()
 	evas_object_image_alpha_set(grid_, EINA_TRUE);
 	evas_object_show(grid_);
 
-	evas_object_geometry_get(layout_, &lyX_, &lyY_, &lyW_, &lyH_);
-	DBG("Layout size: <%d %d> %dx%d", lyX_, lyY_, lyW_, lyH_);
+	Evas_Object *ly = elm_layout_edje_get(layout_);
+	edje_object_part_geometry_get(ly, "grid.bg", &lyX_, &lyY_, &lyW_, &lyH_);
+	//evas_object_geometry_get(layout_, &lyX_, &lyY_, &lyW_, &lyH_);
+	//DBG("Layout size: <%d %d> %dx%d", lyX_, lyY_, lyW_, lyH_);
 
-	lyW_ = 1000;
-	lyH_ = 600;
-
-	evas_object_geometry_set(grid_, 0, 0, lyW_, lyH_);
+	evas_object_geometry_set(grid_, lyX_, lyY_, lyW_, lyH_);
 	evas_object_image_size_set(grid_, lyW_, lyH_);
 
 	surface_grid_ = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, lyW_, lyH_);
@@ -186,7 +186,7 @@ void MainView::CreateBg()
 
 	unsigned char *imageData = cairo_image_surface_get_data(cairo_get_target(cairo_grid_));
 	evas_object_image_data_set(grid_, imageData);
-	evas_object_image_data_update_add(grid_, 0, 0, lyW_, lyH_);
+	evas_object_image_data_update_add(grid_, lyX_, lyY_, lyW_, lyH_);
 
 	evas_object_size_hint_weight_set(grid_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(grid_, EVAS_HINT_FILL, EVAS_HINT_FILL);
@@ -233,13 +233,16 @@ void MainView::CreateXYAxis(cairo_t *cairo, cairo_surface_t *surface)
 	cairo_surface_flush(surface);
 }
 
-void MainView::CreateTrace()
+void MainView::CreateTrace(std::vector<double> &buffer)
 {
+	std::clock_t init;
+	std::clock_t drawing;
+	std::clock_t begin = std::clock();
+
 	static cairo_t *cairo_trace_;
 	static cairo_surface_t *surface_trace_;
 
 	if (!trace_) {
-
 		trace_ = evas_object_image_filled_add(evas_object_evas_get(layout_));
 		evas_object_image_alpha_set(trace_, EINA_TRUE);
 
@@ -254,8 +257,9 @@ void MainView::CreateTrace()
 		surface_trace_ = nullptr;
 	}
 
-	evas_object_geometry_set(trace_, 0, 0, lyW_, lyH_);
-	evas_object_image_size_set(trace_, lyW_, lyH_);
+	Evas_Object *ly = elm_layout_edje_get(layout_);
+	edje_object_part_geometry_get(ly, "grid.bg", &lyX_, &lyY_, &lyW_, &lyH_);
+	//DBG("Layout size: <%d %d> %dx%d", lyX_, lyY_, lyW_, lyH_);
 
 	surface_trace_ = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, lyW_, lyH_);
 	cairo_trace_ = cairo_create(surface_trace_);
@@ -263,21 +267,44 @@ void MainView::CreateTrace()
 	cairo_set_source_rgba(cairo_trace_, 1.0, 1.0, 0.2, 1.0);
 	cairo_set_line_width(cairo_trace_, 3.0);
 
-	cairo_move_to(cairo_trace_, lyX_, lyY_ + lyH_/2.0);
-	for (int i = 1; i < 361; i++)
-		cairo_line_to(cairo_trace_, lyX_ + lyW_*i/360.0, lyY_ + lyH_/2.0 - (std::sin(i*4 * M_PI/180)/2.0*lyH_/2.0));
+	init = std::clock();
+
+	cairo_move_to(cairo_trace_, lyX_, lyY_ + YOffset_ + lyH_/2.0 - (buffer[0] * lyH_/2.0));
+
+	for (int i = 1; i <= buffer.size(); i++) {
+		if (i % 2)
+			continue;
+
+		cairo_line_to(cairo_trace_, lyX_ + lyW_*(i/(double)buffer.size()), lyY_ + YOffset_ + lyH_/2.0 -
+				buffer[i] * lyH_/2.0);
+	}
+
+	drawing = std::clock();
 
 	cairo_stroke(cairo_trace_);
 	cairo_surface_flush(surface_trace_);
 
 	unsigned char *imageData = cairo_image_surface_get_data(cairo_get_target(cairo_trace_));
 	evas_object_image_data_set(trace_, imageData);
-	evas_object_image_data_update_add(trace_, 0, 0, lyW_, lyH_);
+	evas_object_image_data_update_add(trace_, lyX_, lyY_, lyW_, lyH_);
+
+	evas_object_geometry_set(trace_, lyX_, lyY_, lyW_, lyH_);
+	evas_object_image_size_set(trace_, lyW_, lyH_);
 
 	evas_object_size_hint_weight_set(trace_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(trace_, EVAS_HINT_FILL, EVAS_HINT_FILL);
 
 	elm_object_part_content_set(layout_, "trace", trace_);
+
+	DBG("BENCHMARK:");
+	DBG("init: %f", (double)(init - begin)/CLOCKS_PER_SEC);
+	DBG("drawing: %f", (double)(drawing - init)/CLOCKS_PER_SEC);
+	DBG("updating: %f", (double)(std::clock() - drawing)/CLOCKS_PER_SEC);
+}
+
+void MainView::SetYOffset(int offset)
+{
+	YOffset_ = offset;
 }
 
 }

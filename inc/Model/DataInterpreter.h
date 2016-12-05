@@ -1,3 +1,7 @@
+#pragma once
+
+#include <vector>
+
 namespace model {
 
 	class DataInterpreter {
@@ -5,8 +9,9 @@ namespace model {
 		DataInterpreter();
 		virtual ~DataInterpreter();
 
-		unsigned Interpret(void *data);
+		std::vector<double> &Interpret(const char *data);
 	private:
+		std::vector<double> buffer_;
 
 	};
 
