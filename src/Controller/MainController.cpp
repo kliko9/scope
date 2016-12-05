@@ -24,6 +24,7 @@ void MainController::Init() {
 
 void MainController::BtDataReceive(void *data) {
 
+	DBG("DATA RECEIVED");
 	std::clock_t receive;
 	std::clock_t trace;
 
@@ -43,7 +44,7 @@ void MainController::BtDataReceive(void *data) {
 
 	receive = std::clock();
 
-	view_.CreateTrace(buffer);
+	view_.SetBuffer(buffer);
 
 	trace = std::clock();
 

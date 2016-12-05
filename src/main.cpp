@@ -95,6 +95,8 @@ main(int argc, char *argv[])
 	ui_app_add_event_handler(&handlers[APP_EVENT_LANGUAGE_CHANGED], APP_EVENT_LANGUAGE_CHANGED, ui_app_lang_changed, nullptr);
 	ui_app_add_event_handler(&handlers[APP_EVENT_REGION_FORMAT_CHANGED], APP_EVENT_REGION_FORMAT_CHANGED, ui_app_region_changed, nullptr);
 
+	elm_config_accel_preference_set("opengl");
+
 	ret = ui_app_main(argc, argv, &event_callback, nullptr);
 	if (ret != APP_ERROR_NONE) {
 		DBG("app_main() is failed. err = %d", ret);

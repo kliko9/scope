@@ -2,6 +2,8 @@
 #include <cmath>
 #include <ctime>
 
+#include "cairo-evas-gl.h"
+
 #include "View/MainView.h"
 #include "main.h"
 #include "Log.h"
@@ -144,7 +146,7 @@ void MainView::LayoutResizeCb(void *data, Evas *e, Evas_Object *obj, void *event
 	MainView *view = static_cast<MainView *>(data);
 
 	view->CreateBg();
-	//view->CreateTrace();
+	view->CreateTrace();
 }
 
 void MainView::CreateBg()
@@ -233,14 +235,57 @@ void MainView::CreateXYAxis(cairo_t *cairo, cairo_surface_t *surface)
 	cairo_surface_flush(surface);
 }
 
-void MainView::CreateTrace(std::vector<double> &buffer)
+void MainView::CairoDrawCb(void *data, Evas_Object *obj)
+{
+	std::clock_t begin = std::clock();
+	MainView *view = static_cast<MainView *>(data);
+
+	if (view->buffer_.size() == 0) {
+		DBG("Data buffer is empty");
+		return;
+	}
+
+	cairo_set_source_rgba(view->cairo_trace_, 0.0, 0.0, 0.0, 1.0);
+	cairo_paint(view->cairo_trace_);
+
+	cairo_set_source_rgba(view->cairo_trace_, 1.0, 1.0, 0.2, 1.0);
+	cairo_set_line_width(view->cairo_trace_, 3.0);
+
+	cairo_set_operator(view->cairo_trace_, CAIRO_OPERATOR_OVER);
+	cairo_move_to(view->cairo_trace_, view->lyX_, view->lyY_ + view->YOffset_ + view->lyH_/2.0 - (view->buffer_[0] * view->lyH_/2.0));
+
+	for (int i = 1; i <= view->buffer_.size(); i++) {
+		if (i % 2) //TODO remove
+			continue;
+
+		cairo_line_to(view->cairo_trace_, view->lyX_ + view->lyW_*(i/(double)view->buffer_.size()), view->lyY_ + view->YOffset_ + view->lyH_/2.0 - view->buffer_[i] * view->lyH_/2.0);
+	}
+
+	cairo_stroke(view->cairo_trace_);
+	cairo_surface_flush(view->surface_trace_);
+
+	DBG("1 frame took: %f s", (double)(std::clock() - begin)/CLOCKS_PER_SEC);
+}
+
+Eina_Bool MainView::AnimateCb(void *data)
+{
+	MainView *view = static_cast<MainView *>(data);
+
+	evas_object_image_pixels_dirty_set(view->trace_, EINA_TRUE);
+
+	return EINA_TRUE;
+}
+
+void MainView::SetBuffer(std::vector<double> &buffer)
+{
+	buffer_ = buffer;
+}
+
+void MainView::CreateTrace()
 {
 	std::clock_t init;
 	std::clock_t drawing;
 	std::clock_t begin = std::clock();
-
-	static cairo_t *cairo_trace_;
-	static cairo_surface_t *surface_trace_;
 
 	if (!trace_) {
 		trace_ = evas_object_image_filled_add(evas_object_evas_get(layout_));
@@ -248,58 +293,57 @@ void MainView::CreateTrace(std::vector<double> &buffer)
 
 		evas_object_show(trace_);
 	}
-	if (cairo_trace_) {
-		cairo_destroy(cairo_trace_);
-		cairo_trace_ = nullptr;
-	}
-	if (surface_trace_) {
-		cairo_surface_destroy(surface_trace_);
-		surface_trace_ = nullptr;
-	}
 
 	Evas_Object *ly = elm_layout_edje_get(layout_);
 	edje_object_part_geometry_get(ly, "grid.bg", &lyX_, &lyY_, &lyW_, &lyH_);
 	//DBG("Layout size: <%d %d> %dx%d", lyX_, lyY_, lyW_, lyH_);
 
-	surface_trace_ = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, lyW_, lyH_);
-	cairo_trace_ = cairo_create(surface_trace_);
-
-	cairo_set_source_rgba(cairo_trace_, 1.0, 1.0, 0.2, 1.0);
-	cairo_set_line_width(cairo_trace_, 3.0);
-
-	init = std::clock();
-
-	cairo_move_to(cairo_trace_, lyX_, lyY_ + YOffset_ + lyH_/2.0 - (buffer[0] * lyH_/2.0));
-
-	for (int i = 1; i <= buffer.size(); i++) {
-		if (i % 2)
-			continue;
-
-		cairo_line_to(cairo_trace_, lyX_ + lyW_*(i/(double)buffer.size()), lyY_ + YOffset_ + lyH_/2.0 -
-				buffer[i] * lyH_/2.0);
-	}
-
-	drawing = std::clock();
-
-	cairo_stroke(cairo_trace_);
-	cairo_surface_flush(surface_trace_);
-
-	unsigned char *imageData = cairo_image_surface_get_data(cairo_get_target(cairo_trace_));
-	evas_object_image_data_set(trace_, imageData);
-	evas_object_image_data_update_add(trace_, lyX_, lyY_, lyW_, lyH_);
-
 	evas_object_geometry_set(trace_, lyX_, lyY_, lyW_, lyH_);
 	evas_object_image_size_set(trace_, lyW_, lyH_);
 
+	if (!evas_gl_)
+		evas_gl_ = evas_gl_new(evas_object_evas_get(trace_));
+	if (!evas_gl_config_)
+		evas_gl_config_ = evas_gl_config_new();
+
+	evas_gl_config_->color_format = EVAS_GL_RGBA_8888;
+
+	if (!evas_gl_surface_)
+		evas_gl_surface_ = evas_gl_surface_create(evas_gl_, evas_gl_config_, lyW_, lyH_);
+
+	if (!evas_gl_context_)
+		evas_gl_context_ = evas_gl_context_create(evas_gl_, NULL);
+
+	evas_gl_native_surface_get(evas_gl_, evas_gl_surface_, &ns_);
+
+	evas_object_image_native_surface_set(trace_, &ns_);
+	evas_object_image_pixels_get_callback_set(trace_, CairoDrawCb, this);
+
+	setenv("CAIRO_GL_COMPOSITOR", "msaa", 1);
+	if (!cairo_device_)
+		cairo_device_ = (cairo_device_t *)cairo_evas_gl_device_create(evas_gl_, evas_gl_context_);
+
+	cairo_gl_device_set_thread_aware(cairo_device_, 0);
+	if (!surface_trace_)
+		surface_trace_ = (cairo_surface_t *)cairo_gl_surface_create_for_evas_gl(cairo_device_, evas_gl_surface_, evas_gl_config_, lyW_, lyH_);
+
+	if (!cairo_trace_)
+		cairo_trace_ = cairo_create(surface_trace_);
+
+	init = std::clock();
+	drawing = std::clock();
+
 	evas_object_size_hint_weight_set(trace_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(trace_, EVAS_HINT_FILL, EVAS_HINT_FILL);
-
-	elm_object_part_content_set(layout_, "trace", trace_);
 
 	DBG("BENCHMARK:");
 	DBG("init: %f", (double)(init - begin)/CLOCKS_PER_SEC);
 	DBG("drawing: %f", (double)(drawing - init)/CLOCKS_PER_SEC);
 	DBG("updating: %f", (double)(std::clock() - drawing)/CLOCKS_PER_SEC);
+
+	ecore_animator_frametime_set(0.03);
+	if (!animator_)
+		animator_ = ecore_animator_add(AnimateCb, this);
 }
 
 void MainView::SetYOffset(int offset)
