@@ -18,7 +18,7 @@ DataInterpreter::~DataInterpreter()
 
 }
 
-std::vector<double> &DataInterpreter::Interpret(const char *data)
+std::vector<float> &DataInterpreter::Interpret(const char *data)
 {
 	int value = 0;
 	buffer_.clear();

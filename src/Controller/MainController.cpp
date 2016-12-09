@@ -5,24 +5,26 @@
 
 namespace controller {
 
-MainController &MainController::GetInstance() {
+MainController &MainController::GetInstance()
+{
 	static MainController controller;
 	return controller;
 }
 
-MainController::MainController() {
-
+MainController::MainController()
+	: view_(view::MainView::Instance())
+{
 	bluetooth_.RegisterSignal(model::Bluetooth::SignalType::BT_SIGNAL_DATA_RECEIVED,
 			[this](void *data){this->BtDataReceive(data);});
-
 }
 
-void MainController::Init() {
-
+void MainController::Init()
+{
 	DBG("Main controller initialization");
 }
 
-void MainController::BtDataReceive(void *data) {
+void MainController::BtDataReceive(void *data)
+{
 
 	DBG("DATA RECEIVED");
 	std::clock_t receive;
@@ -36,7 +38,7 @@ void MainController::BtDataReceive(void *data) {
 
 	char *receivedData = static_cast<char *>(data);
 
-	std::vector<double> buffer = data_.Interpret(receivedData);
+	std::vector<float> buffer = data_.Interpret(receivedData);
 	if (buffer.size() < 1) {
 		ERR("Invalid data");
 		return;

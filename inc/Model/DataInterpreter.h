@@ -9,9 +9,9 @@ namespace model {
 		DataInterpreter();
 		virtual ~DataInterpreter();
 
-		std::vector<double> &Interpret(const char *data);
+		std::vector<float> &Interpret(const char *data);
 	private:
-		std::vector<double> buffer_;
+		std::vector<float> buffer_;
 
 	};
 

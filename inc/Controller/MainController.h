@@ -14,7 +14,7 @@ namespace controller {
 		void Init();
 
 	private:
-		view::MainView view_;
+		view::MainView &view_;
 
 		model::Bluetooth bluetooth_;
 		model::DataInterpreter data_;
@@ -24,7 +24,5 @@ namespace controller {
 		void operator =(const MainController &) = delete;
 
 		void BtDataReceive(void *data);
-
-		std::vector<double> test;
 	};
 }

@@ -1,14 +1,40 @@
 #include <string>
 #include <cmath>
 #include <ctime>
-
-#include "cairo-evas-gl.h"
+#include <cstdlib>
 
 #include "View/MainView.h"
 #include "main.h"
 #include "Log.h"
 
+#define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
+
 namespace view {
+
+const char *vertexShaderSrc =
+	"attribute vec4 a_position;\n"
+	"void main() {\n"
+	"	gl_Position = vec4(vec2(a_position), 0.0, 1.0);\n"
+	"}\n"
+	;
+
+const char *fragmentShaderSrc =
+	"#ifdef GL_ES\n"
+	"precision mediump float;\n"
+	"#endif\n"
+	"void main() {\n"
+	"	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
+	"}\n"
+	;
+
+struct Point {
+	GLfloat x;
+	GLfloat y;
+};
+
+Point triangleVectices[2000];
+
+ELEMENTARY_GLVIEW_GLOBAL_DEFINE();
 
 MainView::MainView()
 {
@@ -20,6 +46,12 @@ MainView::~MainView()
 
 }
 
+MainView &MainView::Instance()
+{
+	static MainView instance;
+	return instance;
+}
+
 Evas_Object *MainView::GetEvasObject()
 {
 	return win_;
@@ -29,6 +61,18 @@ void MainView::WinDeleteRequestCb(void *data, Evas_Object *obj, void *event_info
 {
 	MainView *view = static_cast<MainView *>(data);
 	elm_win_lower(view->win_);
+}
+
+void MainView::SetViewport(int w, int h)
+{
+	viewport_h = h;
+	viewport_w = w;
+}
+
+void MainView::Viewport(int *w, int *h)
+{
+	*h = viewport_h;
+	*w = viewport_w;
 }
 
 void MainView::CreateContent()
@@ -118,8 +162,6 @@ void MainView::CreateMenu()
 void MainView::ButtonClickedCb(void *data, Evas_Object *obj, void *event_info)
 {
 	DBG("");
-
-
 }
 
 Evas_Object *MainView::CreateMenuButton(const char *name)
@@ -235,111 +277,149 @@ void MainView::CreateXYAxis(cairo_t *cairo, cairo_surface_t *surface)
 	cairo_surface_flush(surface);
 }
 
-void MainView::CairoDrawCb(void *data, Evas_Object *obj)
-{
-	std::clock_t begin = std::clock();
-	MainView *view = static_cast<MainView *>(data);
-
-	if (view->buffer_.size() == 0) {
-		DBG("Data buffer is empty");
-		return;
-	}
-
-	cairo_set_source_rgba(view->cairo_trace_, 0.0, 0.0, 0.0, 1.0);
-	cairo_paint(view->cairo_trace_);
-
-	cairo_set_source_rgba(view->cairo_trace_, 1.0, 1.0, 0.2, 1.0);
-	cairo_set_line_width(view->cairo_trace_, 3.0);
-
-	cairo_set_operator(view->cairo_trace_, CAIRO_OPERATOR_OVER);
-	cairo_move_to(view->cairo_trace_, view->lyX_, view->lyY_ + view->YOffset_ + view->lyH_/2.0 - (view->buffer_[0] * view->lyH_/2.0));
-
-	for (int i = 1; i <= view->buffer_.size(); i++) {
-		if (i % 2) //TODO remove
-			continue;
-
-		cairo_line_to(view->cairo_trace_, view->lyX_ + view->lyW_*(i/(double)view->buffer_.size()), view->lyY_ + view->YOffset_ + view->lyH_/2.0 - view->buffer_[i] * view->lyH_/2.0);
-	}
-
-	cairo_stroke(view->cairo_trace_);
-	cairo_surface_flush(view->surface_trace_);
-
-	DBG("1 frame took: %f s", (double)(std::clock() - begin)/CLOCKS_PER_SEC);
-}
-
 Eina_Bool MainView::AnimateCb(void *data)
 {
 	MainView *view = static_cast<MainView *>(data);
 
-	evas_object_image_pixels_dirty_set(view->trace_, EINA_TRUE);
+	elm_glview_changed_set(view->gl_view_);
 
 	return EINA_TRUE;
 }
 
-void MainView::SetBuffer(std::vector<double> &buffer)
+void MainView::SetBuffer(std::vector<float> &buffer)
 {
 	buffer_ = buffer;
 }
 
-void MainView::CreateTrace()
+bool MainView::GLInitShaders()
 {
-	std::clock_t init;
-	std::clock_t drawing;
-	std::clock_t begin = std::clock();
+	char log[256] = {0, };
 
-	if (!trace_) {
-		trace_ = evas_object_image_filled_add(evas_object_evas_get(layout_));
-		evas_object_image_alpha_set(trace_, EINA_TRUE);
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	glShaderSource(vertexShader, 1, &vertexShaderSrc, NULL);
+	glCompileShader(vertexShader);
+	glGetShaderInfoLog(vertexShader, sizeof(log), NULL, log);
+	DBG("Shader compilation log: %s", log);
 
-		evas_object_show(trace_);
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSrc, NULL);
+	glCompileShader(fragmentShader);
+	glGetShaderInfoLog(fragmentShader, sizeof(log), NULL, log);
+	DBG("Shader compilation log: %s", log);
+
+	program = glCreateProgram();
+	glAttachShader(program, vertexShader);
+	glAttachShader(program, fragmentShader);
+
+	glLinkProgram(program);
+
+	attrPosition = glGetAttribLocation(program, "a_position");
+
+	glUseProgram(program);
+
+	return true;
+}
+
+unsigned short MainView::AttrPosition()
+{
+	return attrPosition;
+}
+
+void MainView::GLInitCb(Evas_Object *obj)
+{
+	DBG("Init gl");
+
+	MainView::Instance().GLInitShaders();
+}
+
+void MainView::GLRenderCb(Evas_Object *obj)
+{
+	DBG("");
+
+	int w, h;
+	Instance().Viewport(&w, &h);
+
+	std::srand(std::time(0)); // use current time as seed for random generator
+
+	float x = 0.0;
+	for (int i = 0; i < 2000; ++i) {
+
+		x = (i - 1000.0)/100.0;
+		triangleVectices[i].x = x;
+		triangleVectices[i].y = (float)std::rand() / RAND_MAX;
 	}
 
-	Evas_Object *ly = elm_layout_edje_get(layout_);
-	edje_object_part_geometry_get(ly, "grid.bg", &lyX_, &lyY_, &lyW_, &lyH_);
-	//DBG("Layout size: <%d %d> %dx%d", lyX_, lyY_, lyW_, lyH_);
+	std::clock_t begin = std::clock();
 
-	evas_object_geometry_set(trace_, lyX_, lyY_, lyW_, lyH_);
-	evas_object_image_size_set(trace_, lyW_, lyH_);
+	glViewport(0, 0, w, h);
 
-	if (!evas_gl_)
-		evas_gl_ = evas_gl_new(evas_object_evas_get(trace_));
-	if (!evas_gl_config_)
-		evas_gl_config_ = evas_gl_config_new();
+	glClearColor(0.0f, 0.0f, 0.0f, 0.2f);
+	glClear(GL_COLOR_BUFFER_BIT);
 
-	evas_gl_config_->color_format = EVAS_GL_RGBA_8888;
+	GLuint vbo;
+	glGenBuffers(1, &vbo);
 
-	if (!evas_gl_surface_)
-		evas_gl_surface_ = evas_gl_surface_create(evas_gl_, evas_gl_config_, lyW_, lyH_);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof triangleVectices, triangleVectices, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-	if (!evas_gl_context_)
-		evas_gl_context_ = evas_gl_context_create(evas_gl_, NULL);
+	glEnableVertexAttribArray(Instance().AttrPosition());
+	glVertexAttribPointer(Instance().AttrPosition(), 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-	evas_gl_native_surface_get(evas_gl_, evas_gl_surface_, &ns_);
+	glDrawArrays(GL_LINE_STRIP, 0, ARRAY_SIZE(triangleVectices));
 
-	evas_object_image_native_surface_set(trace_, &ns_);
-	evas_object_image_pixels_get_callback_set(trace_, CairoDrawCb, this);
+	glDisableVertexAttribArray(Instance().AttrPosition());
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	setenv("CAIRO_GL_COMPOSITOR", "msaa", 1);
-	if (!cairo_device_)
-		cairo_device_ = (cairo_device_t *)cairo_evas_gl_device_create(evas_gl_, evas_gl_context_);
+	DBG("BENCHMARK: %f", (double)(std::clock() - begin)/CLOCKS_PER_SEC);
+}
 
-	cairo_gl_device_set_thread_aware(cairo_device_, 0);
-	if (!surface_trace_)
-		surface_trace_ = (cairo_surface_t *)cairo_gl_surface_create_for_evas_gl(cairo_device_, evas_gl_surface_, evas_gl_config_, lyW_, lyH_);
+void MainView::GLResizeCb(Evas_Object *obj)
+{
+	DBG("");
 
-	if (!cairo_trace_)
-		cairo_trace_ = cairo_create(surface_trace_);
+	int w, h;
 
-	init = std::clock();
-	drawing = std::clock();
+	elm_glview_size_get(obj, &w, &h);
+	glViewport(0, 0, w, h);
 
-	evas_object_size_hint_weight_set(trace_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-	evas_object_size_hint_align_set(trace_, EVAS_HINT_FILL, EVAS_HINT_FILL);
+	Instance().SetViewport(w, h);
+}
 
-	DBG("BENCHMARK:");
-	DBG("init: %f", (double)(init - begin)/CLOCKS_PER_SEC);
-	DBG("drawing: %f", (double)(drawing - init)/CLOCKS_PER_SEC);
-	DBG("updating: %f", (double)(std::clock() - drawing)/CLOCKS_PER_SEC);
+void MainView::GLDelCb(Evas_Object *obj)
+{
+	DBG("");
+}
+
+void MainView::CreateTrace()
+{
+	if (gl_view_)
+		return;
+
+	gl_view_ = elm_glview_add(layout_);
+
+	if (gl_view_) {
+
+		DBG("Set elm_gl");
+
+		ELEMENTARY_GLVIEW_GLOBAL_USE(gl_view_);
+
+		elm_glview_init_func_set(gl_view_, GLInitCb);
+		elm_glview_render_func_set(gl_view_, GLRenderCb);
+		elm_glview_resize_func_set(gl_view_, GLResizeCb);
+		elm_glview_del_func_set(gl_view_, GLDelCb);
+
+		elm_glview_render_policy_set(gl_view_, ELM_GLVIEW_RENDER_POLICY_ALWAYS);
+		elm_glview_resize_policy_set(gl_view_, ELM_GLVIEW_RESIZE_POLICY_RECREATE);
+		elm_glview_mode_set(gl_view_, ELM_GLVIEW_ALPHA);
+
+		elm_object_part_content_set(layout_, "trace", gl_view_);
+
+		evas_object_size_hint_weight_set(gl_view_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+		evas_object_size_hint_align_set(gl_view_, EVAS_HINT_FILL, EVAS_HINT_FILL);
+
+		evas_object_show(gl_view_);
+	}
 
 	ecore_animator_frametime_set(0.03);
 	if (!animator_)
