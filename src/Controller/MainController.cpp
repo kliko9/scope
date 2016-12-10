@@ -12,7 +12,6 @@ MainController &MainController::GetInstance()
 }
 
 MainController::MainController()
-	: view_(view::MainView::Instance())
 {
 	bluetooth_.RegisterSignal(model::Bluetooth::SignalType::BT_SIGNAL_DATA_RECEIVED,
 			[this](void *data){this->BtDataReceive(data);});
