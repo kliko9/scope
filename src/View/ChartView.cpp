@@ -85,8 +85,6 @@ void ChartView::GLInitCb(Evas_Object *obj)
 
 void ChartView::GLRenderCb(Evas_Object *obj)
 {
-	DBG("");
-
 	int w, h;
 	Instance().Viewport(&w, &h);
 
@@ -122,7 +120,7 @@ void ChartView::GLRenderCb(Evas_Object *obj)
 	glDisableVertexAttribArray(Instance().AttrPosition());
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-	DBG("BENCHMARK: %f", (double)(std::clock() - begin)/CLOCKS_PER_SEC);
+	//DBG("BENCHMARK: %f", (double)(std::clock() - begin)/CLOCKS_PER_SEC);
 }
 
 void ChartView::GLResizeCb(Evas_Object *obj)
@@ -156,25 +154,26 @@ void ChartView::Viewport(int *w, int *h)
 
 Evas_Object *ChartView::CreateContent(Evas_Object *parent) {
 
+	if (gl_view_)
+		return gl_view_;
+
 	gl_view_ = elm_glview_add(parent);
 
-	if (gl_view_) {
-		ELEMENTARY_GLVIEW_GLOBAL_USE(gl_view_);
+	ELEMENTARY_GLVIEW_GLOBAL_USE(gl_view_);
 
-		elm_glview_init_func_set(gl_view_, GLInitCb);
-		elm_glview_render_func_set(gl_view_, GLRenderCb);
-		elm_glview_resize_func_set(gl_view_, GLResizeCb);
-		elm_glview_del_func_set(gl_view_, GLDelCb);
+	elm_glview_init_func_set(gl_view_, GLInitCb);
+	elm_glview_render_func_set(gl_view_, GLRenderCb);
+	elm_glview_resize_func_set(gl_view_, GLResizeCb);
+	elm_glview_del_func_set(gl_view_, GLDelCb);
 
-		elm_glview_render_policy_set(gl_view_, ELM_GLVIEW_RENDER_POLICY_ALWAYS);
-		elm_glview_resize_policy_set(gl_view_, ELM_GLVIEW_RESIZE_POLICY_RECREATE);
-		elm_glview_mode_set(gl_view_, ELM_GLVIEW_ALPHA);
+	elm_glview_render_policy_set(gl_view_, ELM_GLVIEW_RENDER_POLICY_ALWAYS);
+	elm_glview_resize_policy_set(gl_view_, ELM_GLVIEW_RESIZE_POLICY_RECREATE);
+	elm_glview_mode_set(gl_view_, ELM_GLVIEW_ALPHA);
 
-		evas_object_size_hint_weight_set(gl_view_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-		evas_object_size_hint_align_set(gl_view_, EVAS_HINT_FILL, EVAS_HINT_FILL);
+	evas_object_size_hint_weight_set(gl_view_, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+	evas_object_size_hint_align_set(gl_view_, EVAS_HINT_FILL, EVAS_HINT_FILL);
 
-		evas_object_show(gl_view_);
-	}
+	evas_object_show(gl_view_);
 
 	ecore_animator_frametime_set(0.03);
 	if (!animator_)

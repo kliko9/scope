@@ -74,28 +74,67 @@ void MainView::CreateContent()
 
 	CreateMenu();
 	CreateDataMenu();
+	CreateCursorSliders();
+	CreateCursors();
 
 	evas_object_event_callback_add(layout_, EVAS_CALLBACK_RESIZE, LayoutResizeCb, this);
 }
 
-Evas_Object *MainView::CreateCursors()
+void MainView::DestroyCursors()
 {
-	Evas_Object *cursors = elm_layout_add(layout_);
-	std::string resourcePath = std::string(app_get_resource_path());
-	resourcePath.append("edje/cursors.edj");
+	if (cursorVoltage1) {
+		evas_object_del(cursorVoltage1);
+		cursorVoltage1 = nullptr;
+	}
+	if (cursorVoltage2) {
+		evas_object_del(cursorVoltage2);
+		cursorVoltage2 = nullptr;
+	}
+	if (cursorTime1) {
+		evas_object_del(cursorTime1);
+		cursorTime1 = nullptr;
+	}
+	if (cursorTime2) {
+		evas_object_del(cursorTime2);
+		cursorTime2 = nullptr;
+	}
+}
 
-	if (!elm_layout_file_set(cursors, resourcePath.c_str(), "Cursors")) {
-		ERR("Could not load file: %s", resourcePath.c_str());
-		evas_object_del(cursors);
-		return NULL;
+void MainView::CreateCursors()
+{
+	if (!cursorVoltage1)
+		cursorVoltage1 = CreateCursor(true);
+	if (!cursorVoltage2)
+		cursorVoltage2 = CreateCursor(true);
+	if (!cursorTime1)
+		cursorTime1 = CreateCursor(false);
+	if (!cursorTime2)
+		cursorTime2 = CreateCursor(false);
+}
+
+Evas_Object *MainView::CreateCursor(bool horizontal)
+{
+	Evas_Object *cursor = elm_image_add(layout_);
+
+	std::string resourcePath = std::string(app_get_resource_path());
+	if (horizontal) {
+		resourcePath.append("edje/images/cursor_horizontal.png");
+		evas_object_geometry_set(cursor, 0, 100, 1000, 3);
+	} else {
+		resourcePath.append("edje/images/cursor_vertical.png");
+		evas_object_geometry_set(cursor, 100, 0, 3, 600);
 	}
 
-	evas_object_size_hint_weight_set(cursors, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-	evas_object_size_hint_align_set(cursors, EVAS_HINT_FILL, EVAS_HINT_FILL);
+	if (!elm_image_file_set(cursor, resourcePath.c_str(), NULL)) {
+		ERR("elm_image_file_set failed");
+		return nullptr;
+	}
 
-	evas_object_show(cursors);
+	evas_object_color_set(cursor, 20, 175, 195, 255);
 
-	return cursors;
+	evas_object_show(cursor);
+
+	return cursor;
 }
 
 void MainView::CreateMenu()
@@ -184,11 +223,62 @@ void MainView::LayoutResizeCb(void *data, Evas *e, Evas_Object *obj, void *event
 
 	view->CreateBg();
 
-	Evas_Object *cursors = view->CreateCursors();
-	elm_object_part_content_set(view->layout_, "cursors", cursors);
-
 	Evas_Object *glView = view->chart_.CreateContent(view->layout_);
 	elm_object_part_content_set(view->layout_, "trace", glView);
+}
+
+void MainView::ChangeCursorGeometry(Evas_Object *cursor, int coord)
+{
+	if (cursor == cursorVoltage1 || cursor == cursorVoltage2)
+		evas_object_geometry_set(cursor, 0, coord, 1000, 3);
+	else
+		evas_object_geometry_set(cursor, coord, 0, 3, 600);
+}
+
+void MainView::SliderChangedCb(void *data, Evas_Object *obj, void *event_info)
+{
+	MainView *view = static_cast<MainView *>(data);
+	double val = 0.0;
+	Evas_Object *cursor;
+
+	if (obj == view->vSlider) {
+		cursor = view->cursorVoltage1;
+	} else {
+		cursor = view->cursorTime1;
+	}
+
+	val = elm_slider_value_get(obj);
+	DBG("val: %f", val);
+	view->ChangeCursorGeometry(cursor, (int)val);
+}
+
+Evas_Object *MainView::CreateSlider(Eina_Bool horizontal, double min, double max)
+{
+	Evas_Object *slider = elm_slider_add(layout_);
+
+	evas_object_size_hint_align_set(slider, EVAS_HINT_FILL, EVAS_HINT_FILL);
+	evas_object_size_hint_weight_set(slider, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+
+	elm_object_style_set(slider, "center_point");
+	elm_slider_min_max_set(slider, min, max);
+	elm_slider_value_set(slider, (max - min)/2);
+
+	evas_object_smart_callback_add(slider, "changed", SliderChangedCb, this);
+
+	elm_slider_horizontal_set(slider, horizontal);
+
+	evas_object_show(slider);
+
+	return slider;
+}
+
+void MainView::CreateCursorSliders()
+{
+	hSlider = CreateSlider(EINA_TRUE, 0.0, 1000.0);
+	elm_object_part_content_set(layout_, "horizontal.scroller", hSlider);
+
+	vSlider = CreateSlider(EINA_FALSE, 0.0, 600.0);
+	elm_object_part_content_set(layout_, "vertical.scroller", vSlider);
 }
 
 void MainView::CreateBg()

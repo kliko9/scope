@@ -22,9 +22,15 @@ namespace view {
 	private:
 		ChartView &chart_;
 
-		Evas_Object *win_;
-		Evas_Object *conformant_;
-		Evas_Object *layout_;
+		Evas_Object *win_ = nullptr;
+		Evas_Object *conformant_ = nullptr;
+		Evas_Object *layout_ = nullptr;
+
+		Evas_Object *vSlider = nullptr;
+		Evas_Object *hSlider = nullptr;
+
+		Evas_Object *cursorVoltage1 = nullptr, *cursorVoltage2 = nullptr;
+		Evas_Object *cursorTime1 = nullptr, *cursorTime2 = nullptr;
 
 		Evas_Object *grid_ = nullptr;
 		std::vector<float> buffer_;
@@ -35,15 +41,21 @@ namespace view {
 		void CreateContent();
 		void CreateMenu();
 		void CreateDataMenu();
-		Evas_Object *CreateCursors();
+		void CreateCursorSliders();
+		Evas_Object *CreateSlider(Eina_Bool horizontal, double min, double max);
+		Evas_Object *CreateCursor(bool horizontal);
+		void CreateCursors();
+		void DestroyCursors();
 		void CreateBg();
 		void CreateTrace();
 		void CreateGrid(cairo_t *cairo, cairo_surface_t *surface);
 		void CreateXYAxis(cairo_t *cairo, cairo_surface_t *surface);
 		Evas_Object *CreateMenuButton(const char* name);
+		void ChangeCursorGeometry(Evas_Object *cursor, int coord);
 
 		static void LayoutResizeCb(void *data, Evas *e, Evas_Object *obj, void *event_info);
 		static void ButtonClickedCb(void *data, Evas_Object *obj, void *event_info);
 		static void WinDeleteRequestCb(void *data, Evas_Object *obj, void *event_info);
+		static void SliderChangedCb(void *data, Evas_Object *obj, void *event_info);
 	};
 }

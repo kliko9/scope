@@ -48,27 +48,22 @@ collections {
 					align: 1.0 0.5;
 				}
 			}
-			image { "horizontal.scroller";
+			swallow { "horizontal.scroller";
 				desc { "default";
-					color: 255 255 255 50;
 					rel1 { relative: 0.0 1.0; to: "grid.bg"; };
 					rel2 { relative: 1.0 1.0; to_x: "grid.bg"; };
 					min: 0 80;
 					max: -1 80;
 					align: 0.5 0.0;
-					image.normal: "scroller_horizontal.png";
 				}
 			}
-			image { "vertical.scroller";
+			swallow { "vertical.scroller";
 				desc { "default";
-					color: 255 255 255 50;
 					rel1 { relative: 1.0 0.0; to: "grid.bg"; };
 					rel2 { relative: 1.0 1.0; to_y: "grid.bg"; };
 					min: 80 0;
 					max: 80 -1;
-					fixed: 1 0;
 					align: 0.0 0.5;
-					image.normal: "scroller_vertical.png";
 				}
 			}
 			swallow { "data";
@@ -116,12 +111,6 @@ collections {
 				}
 				desc { "contracted";
 					inherit: "default";
-				}
-			}
-			swallow { "cursors";
-				desc { "default";
-					rel1.to: "grid.bg";
-					rel2.to: "grid.bg";
 				}
 			}
 			program {
