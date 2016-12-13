@@ -34,6 +34,8 @@ namespace view {
 
 		void CreateContent();
 		void CreateMenu();
+		void CreateDataMenu();
+		Evas_Object *CreateCursors();
 		void CreateBg();
 		void CreateTrace();
 		void CreateGrid(cairo_t *cairo, cairo_surface_t *surface);

@@ -1,13 +1,6 @@
 collections {
 	base_scale: 2.6;
 
-	styles {
-		style {
-			name: "default_style";
-			base: "font=Tizen:style=Regular color=#FFFFFFFF font_size=30 ellipsis=1.0 align=center";
-		}
-	}
-
 	images {
 		image: "circle_movement_button_arrow_left.png" COMP;
 		image: "circle_movement_button_arrow_right.png" COMP;
@@ -15,6 +8,10 @@ collections {
 		image: "circle_movement_button_arrow_down.png" COMP;
 		image: "circle_movement_button_bg.png" COMP;
 		image: "default_bg.png" COMP;
+		image: "arrow_right.png" COMP;
+		image: "arrow_left.png" COMP;
+		image: "scroller_horizontal.png" COMP;
+		image: "scroller_vertical.png" COMP;
 	}
 
 	group { "Main";
@@ -27,38 +24,10 @@ collections {
 			rect { "grid.bg";
 				desc { "default";
 					color: 25 25 25 100;
-					//rel1.relative: 0.03 0.03;
 					rel2.relative: 0.95 0.95;
 					min: 1000 600;
 					max: 1000 600;
 					align: 0.0 0.0;
-				}
-			}
-			rect { "horizontal.scroller";
-				desc { "default";
-					color: 25 25 25 50;
-					rel1 { relative: 0.0 1.0; to: "grid.bg"; };
-					rel2 { relative: 1.0 1.0; to_x: "grid.bg"; };
-					min: 0 80;
-					max: -1 80;
-					align: 0.5 0.0;
-				}
-			}
-			rect { "vertical.scroller";
-				desc { "default";
-					color: 25 25 25 50;
-					rel1 { relative: 1.0 0.0; to: "grid.bg"; };
-					rel2 { relative: 1.0 1.0; to_y: "grid.bg"; };
-					min: 80 0;
-					max: 80 -1;
-					align: 0.0 0.5;
-				}
-			}
-			rect { "scroller.filler";
-				desc { "default";
-					color: 25 25 25 50;
-					rel1 { relative: 1.0 1.0; to_x: "horizontal.scroller"; to_y: "vertical.scroller"; };
-					rel2 { relative: 1.0 1.0; to_x: "vertical.scroller"; to_y: "horizontal.scroller"; };
 				}
 			}
 			swallow { "grid";
@@ -79,15 +48,109 @@ collections {
 					align: 1.0 0.5;
 				}
 			}
-			/*
+			image { "horizontal.scroller";
+				desc { "default";
+					color: 255 255 255 50;
+					rel1 { relative: 0.0 1.0; to: "grid.bg"; };
+					rel2 { relative: 1.0 1.0; to_x: "grid.bg"; };
+					min: 0 80;
+					max: -1 80;
+					align: 0.5 0.0;
+					image.normal: "scroller_horizontal.png";
+				}
+			}
+			image { "vertical.scroller";
+				desc { "default";
+					color: 255 255 255 50;
+					rel1 { relative: 1.0 0.0; to: "grid.bg"; };
+					rel2 { relative: 1.0 1.0; to_y: "grid.bg"; };
+					min: 80 0;
+					max: 80 -1;
+					fixed: 1 0;
+					align: 0.0 0.5;
+					image.normal: "scroller_vertical.png";
+				}
+			}
+			swallow { "data";
+				desc { "default";
+					rel1 { relative: 1.0 0.0; to_x: "vertical.scroller"; };
+					rel2 { relative: 1.0 1.0; to_y: "grid"; };
+					min: 200 0;
+					max: 200 -1;
+					align: 1.0 0.0;
+				}
+			}
 			swallow { "menu";
-				desc {
-					rel1 { relative: 1.02 0.02; to_x: "grid"; };
-					rel2 { relative: 0.98 0.98; };
+				desc { "default";
+					rel1.relative: 1.0 0.0;
+					rel2.relative: 2.0 1.0;
+					min: 200 0;
+					max: 200 -1;
+					align: 0.0 0.0;
+				}
+				desc { "expanded";
+					inherit: "default";
+					rel1 { relative: 1.0 0.0; to_x: "vertical.scroller"; };
+				}
+				desc { "contracted";
+					inherit: "default";
 				}
 
 			}
-			*/
+			image { "btn.menu.show";
+				desc { "default";
+					color: 255 255 255 200;
+					min: 130 100;
+					max: 130 100;
+					rel2 { relative: 0.0 1.0; to: "menu"; };
+					align: 1.0 1.0;
+					image.normal: "arrow_left.png";
+				}
+				desc { "expanded";
+					inherit: "default";
+					color: 0 0 0 100;
+					rel1 { relative: 0.0 0.0; to: "menu"; };
+					rel2 { relative: 1.0 1.0; to: "menu"; };
+					align: 0.0 1.0;
+					image.normal: "arrow_right.png";
+				}
+				desc { "contracted";
+					inherit: "default";
+				}
+			}
+			swallow { "cursors";
+				desc { "default";
+					rel1.to: "grid.bg";
+					rel2.to: "grid.bg";
+				}
+			}
+			program {
+				signal: "mouse,clicked,*";
+				source: "btn.menu.show";
+				script {
+					new state[32];
+					new Float:val;
+					get_state(PART:"menu", state, 31, val);
+					if (!strcmp(state, "expanded"))
+						run_program(PROGRAM:"menu,contract");
+					else
+						run_program(PROGRAM:"menu,expand");
+				}
+			}
+			program {
+				name: "menu,contract";
+				action: STATE_SET "contracted";
+				target: "menu";
+				target: "btn.menu.show";
+				transition: ACCEL 0.4;
+			}
+			program {
+				name: "menu,expand";
+				action: STATE_SET "expanded";
+				target: "menu";
+				target: "btn.menu.show";
+				transition: DECEL 0.4;
+			}
 		}
 	}
 
@@ -137,99 +200,4 @@ collections {
 			}
 		}
 	}
-
-	group { "Menu";
-		parts {
-			swallow { "btn.voltage.inc";
-				desc {
-					rel1 { relative: 0.0 0.0; };
-					rel2 { relative: 0.5 0.12; };
-				}
-			}
-			swallow { "btn.voltage.dec";
-				desc {
-					rel1 { relative: 0.5 0.0; };
-					rel2 { relative: 1.0 0.12; };
-				}
-			}
-			swallow { "btn.time.inc";
-				desc {
-					rel1 { relative: 0.0 0.12; };
-					rel2 { relative: 0.5 0.24; };
-				}
-			}
-			swallow { "btn.time.dec";
-				desc {
-					rel1 { relative: 0.5 0.12; };
-					rel2 { relative: 1.0 0.24; };
-				}
-			}
-			swallow { "btn.auto";
-				desc {
-					rel1 { relative: 0.0 0.24; };
-					rel2 { relative: 1.0 0.36; };
-				}
-			}
-			swallow { "btn.ch";
-				desc {
-					rel1 { relative: 0.0 0.36; };
-					rel2 { relative: 1.0 0.48; };
-				}
-			}
-			group { "btn.movement";
-				source: "MovementButton";
-				desc { "default";
-					min: 200 200;
-					max: 200 200;
-					align: 0.5 1.0;
-				}
-			}
-		}
-	}
-
-	group { "elm/button/base/scope";
-		data.item: "texts" "elm.text";
-		parts {
-			rect { "bg_frame";
-				desc { "default";
-					color: 25 25 25 50;
-				}
-				desc { "pressed";
-					color: 25 25 25 100;
-					inherit: "default";
-				}
-			}
-			textblock { "elm.text";
-				desc { "default";
-					text.style: "default_style";
-					align: 0.5 0.5;
-				}
-			}
-			rect { "bg";
-				desc { "default";
-					color: 25 25 25 50;
-					rel1 { to: "bg_frame"; offset: 2 2; };
-					rel2 { to: "bg_frame"; offset: -2 -2; };
-				}
-				desc { "pressed";
-					color: 255 0 0 255;
-					inherit: "default";
-				}
-			}
-			program {
-				signal: "mouse,down,*";
-				source: "bg";
-				action: STATE_SET "pressed";
-				target: "bg_frame";
-				target: "bg";
-				transition: DECEL 0.1;
-			}
-			program {
-				signal: "mouse,clicked,*";
-				source: "bg";
-				action: SIGNAL_EMIT "elm,action,click" "";
-			}
-		}
-	}
-
 }

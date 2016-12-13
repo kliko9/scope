@@ -1,0 +1,63 @@
+collections {
+
+	base_scale: 2.6;
+
+	styles {
+		style {
+			name: "default_style";
+			base: "font=Tizen:style=Regular color=#FFFFFFFF font_size=30 ellipsis=1.0 align=center";
+		}
+	}
+
+
+	group { "Data";
+		parts {
+			table { "data";
+				table {
+					items {
+						#define ITEM(part_name, source_name, pos, wg) \
+						item { \
+						source: source_name; \
+						name: part_name; \
+						position: 0 pos; \
+						weight: wg 1.0; \
+						span: 1 1; \
+						align: -1.0 -1.0; \
+						}
+						ITEM("Voltage", "DataItem", 0, 1.0);
+						ITEM("Frequency", "DataItem", 1, 1.0);
+						ITEM("TimeDelta", "DataItem", 2, 1.0);
+						ITEM("Xys", "DataItem", 3, 1.0);
+						ITEM("X", "DataItem", 4, 1.0);
+						ITEM("Y", "DataItem", 5, 1.0);
+						ITEM("Z", "DataItem", 6, 1.0);
+					}
+				}
+			}
+		}
+	}
+
+	group { "DataItem";
+		parts {
+			rect { "bg_frame";
+				desc { "default";
+					color: 25 25 25 50;
+				}
+			}
+			rect { "bg";
+				desc { "default";
+					color: 25 25 25 50;
+					rel1 { to: "bg_frame"; offset: 2 2; };
+					rel2 { to: "bg_frame"; offset: -2 -2; };
+				}
+			}
+			textblock { "Vpp";
+				desc {
+					text.text: "Vpp: 1.23V";
+					text.style: "default_style";
+					align: 0.5 0.0;
+				}
+			}
+		}
+	}
+}

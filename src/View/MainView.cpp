@@ -39,7 +39,8 @@ void MainView::CreateContent()
 
 	if (elm_win_wm_rotation_supported_get(win_)) {
 		int rots[2] = { 90, 270 };
-		elm_win_wm_rotation_available_rotations_set(win_, (const int *)(&rots), sizeof(rots)/sizeof(rots[0]));
+		elm_win_wm_rotation_available_rotations_set(win_,
+				(const int *)(&rots), sizeof(rots)/sizeof(rots[0]));
 	}
 
 	evas_object_smart_callback_add(win_, "delete,request", WinDeleteRequestCb, this);
@@ -72,28 +73,48 @@ void MainView::CreateContent()
 	evas_object_show(layout_);
 
 	CreateMenu();
+	CreateDataMenu();
 
 	evas_object_event_callback_add(layout_, EVAS_CALLBACK_RESIZE, LayoutResizeCb, this);
 }
 
+Evas_Object *MainView::CreateCursors()
+{
+	Evas_Object *cursors = elm_layout_add(layout_);
+	std::string resourcePath = std::string(app_get_resource_path());
+	resourcePath.append("edje/cursors.edj");
+
+	if (!elm_layout_file_set(cursors, resourcePath.c_str(), "Cursors")) {
+		ERR("Could not load file: %s", resourcePath.c_str());
+		evas_object_del(cursors);
+		return NULL;
+	}
+
+	evas_object_size_hint_weight_set(cursors, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+	evas_object_size_hint_align_set(cursors, EVAS_HINT_FILL, EVAS_HINT_FILL);
+
+	evas_object_show(cursors);
+
+	return cursors;
+}
+
 void MainView::CreateMenu()
 {
-
 	Evas_Object *menu = elm_layout_add(layout_);
 	std::string resourcePath = std::string(app_get_resource_path());
-	resourcePath.append("edje/main.edj");
+	resourcePath.append("edje/menu.edj");
 
 	if (!elm_layout_file_set(menu, resourcePath.c_str(), "Menu")) {
 		ERR("Could not load file: %s", resourcePath.c_str());
-		evas_object_del(win_);
+		evas_object_del(menu);
 		return;
 	}
 
 	evas_object_size_hint_weight_set(menu, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(menu, EVAS_HINT_FILL, EVAS_HINT_FILL);
 
-	//evas_object_show(menu);
-	//elm_object_part_content_set(layout_, "menu", menu);
+	evas_object_show(menu);
+	elm_object_part_content_set(layout_, "menu", menu);
 
 	elm_theme_overlay_add(NULL, resourcePath.c_str());
 
@@ -112,6 +133,25 @@ void MainView::CreateMenu()
 	button = CreateMenuButton("CH2");
 	elm_object_part_content_set(menu, "btn.ch", button);
 
+}
+
+void MainView::CreateDataMenu()
+{
+	Evas_Object *menu = elm_layout_add(layout_);
+	std::string resourcePath = std::string(app_get_resource_path());
+	resourcePath.append("edje/data.edj");
+
+	if (!elm_layout_file_set(menu, resourcePath.c_str(), "Data")) {
+		ERR("Could not load file: %s", resourcePath.c_str());
+		evas_object_del(menu);
+		return;
+	}
+
+	evas_object_size_hint_weight_set(menu, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+	evas_object_size_hint_align_set(menu, EVAS_HINT_FILL, EVAS_HINT_FILL);
+
+	evas_object_show(menu);
+	elm_object_part_content_set(layout_, "data", menu);
 }
 
 void MainView::ButtonClickedCb(void *data, Evas_Object *obj, void *event_info)
@@ -144,6 +184,9 @@ void MainView::LayoutResizeCb(void *data, Evas *e, Evas_Object *obj, void *event
 
 	view->CreateBg();
 
+	Evas_Object *cursors = view->CreateCursors();
+	elm_object_part_content_set(view->layout_, "cursors", cursors);
+
 	Evas_Object *glView = view->chart_.CreateContent(view->layout_);
 	elm_object_part_content_set(view->layout_, "trace", glView);
 }
@@ -173,8 +216,6 @@ void MainView::CreateBg()
 
 	Evas_Object *ly = elm_layout_edje_get(layout_);
 	edje_object_part_geometry_get(ly, "grid.bg", &lyX_, &lyY_, &lyW_, &lyH_);
-	//evas_object_geometry_get(layout_, &lyX_, &lyY_, &lyW_, &lyH_);
-	//DBG("Layout size: <%d %d> %dx%d", lyX_, lyY_, lyW_, lyH_);
 
 	evas_object_geometry_set(grid_, lyX_, lyY_, lyW_, lyH_);
 	evas_object_image_size_set(grid_, lyW_, lyH_);
