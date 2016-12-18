@@ -16,7 +16,7 @@ MainView::MainView()
 
 MainView::~MainView()
 {
-
+	DBG("");
 }
 
 Evas_Object *MainView::GetEvasObject()
@@ -157,21 +157,28 @@ void MainView::CreateMenu()
 
 	elm_theme_overlay_add(NULL, resourcePath.c_str());
 
+	Evas_Object *menuEdje = elm_layout_edje_get(menu);
+
 	Evas_Object *button = CreateMenuButton("V+");
-	elm_object_part_content_set(menu, "btn.voltage.inc", button);
+	edje_object_part_table_pack(menuEdje, "menu.buttons", button, 0, 0, 1, 1);
 	button = CreateMenuButton("V-");
-	elm_object_part_content_set(menu, "btn.voltage.dec", button);
+	edje_object_part_table_pack(menuEdje, "menu.buttons", button, 1, 0, 1, 1);
 	button = CreateMenuButton("T+");
-	elm_object_part_content_set(menu, "btn.time.inc", button);
+	edje_object_part_table_pack(menuEdje, "menu.buttons", button, 0, 1, 1, 1);
 	button = CreateMenuButton("T-");
-	elm_object_part_content_set(menu, "btn.time.dec", button);
+	edje_object_part_table_pack(menuEdje, "menu.buttons", button, 1, 1, 1, 1);
 
 	button = CreateMenuButton("Auto");
-	elm_object_part_content_set(menu, "btn.auto", button);
+	edje_object_part_table_pack(menuEdje, "menu.buttons", button, 0, 2, 2, 1);
 
 	button = CreateMenuButton("CH2");
-	elm_object_part_content_set(menu, "btn.ch", button);
+	edje_object_part_table_pack(menuEdje, "menu.buttons", button, 0, 3, 2, 1);
 
+	button = CreateMenuButton("Voltage");
+	edje_object_part_table_pack(menuEdje, "menu.buttons", button, 0, 4, 2, 1);
+
+	button = CreateMenuButton("Cursor");
+	edje_object_part_table_pack(menuEdje, "menu.buttons", button, 0, 5, 2, 1);
 }
 
 void MainView::CreateDataMenu()
@@ -365,14 +372,19 @@ void MainView::CreateXYAxis(cairo_t *cairo, cairo_surface_t *surface)
 	cairo_surface_flush(surface);
 }
 
-void MainView::SetBuffer(std::vector<float> &buffer)
-{
-	buffer_ = buffer;
-}
-
 void MainView::SetYOffset(int offset)
 {
 	YOffset_ = offset;
+}
+
+utils::Point *MainView::Buffer()
+{
+	return chart_.Buffer();
+}
+
+unsigned MainView::BufferSize()
+{
+	return chart_.BufferSize();
 }
 
 }

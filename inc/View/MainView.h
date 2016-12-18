@@ -6,7 +6,8 @@
 #include <Elementary.h>
 #include <cairo.h>
 
-#include "ChartView.h"
+#include "Utils/Point.h"
+#include "View/ChartView.h"
 
 namespace view {
 
@@ -18,7 +19,8 @@ namespace view {
 		Evas_Object *GetEvasObject();
 
 		void SetYOffset(int offset);
-		void SetBuffer(std::vector<float> &buffer);
+		utils::Point *Buffer();
+		unsigned BufferSize();
 	private:
 		ChartView &chart_;
 

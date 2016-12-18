@@ -10,6 +10,8 @@ namespace view {
 
 ELEMENTARY_GLVIEW_GLOBAL_DEFINE();
 
+utils::Point buffer[1000];
+
 const char *vertexShaderSrc =
 	"attribute vec4 a_position;\n"
 	"void main() {\n"
@@ -25,13 +27,6 @@ const char *fragmentShaderSrc =
 	"	gl_FragColor = vec4(1.0, 1.0, 0.2, 1.0);\n"
 	"}\n"
 	;
-
-struct Point {
-	GLfloat x;
-	GLfloat y;
-};
-
-Point triangleVectices[2000];
 
 Eina_Bool ChartView::AnimateCb(void *data)
 {
@@ -90,6 +85,7 @@ void ChartView::GLRenderCb(Evas_Object *obj)
 
 	std::srand(std::time(0)); // use current time as seed for random generator
 
+	/*
 	float x = 0.0;
 	for (int i = 0; i < 2000; ++i) {
 
@@ -97,6 +93,7 @@ void ChartView::GLRenderCb(Evas_Object *obj)
 		triangleVectices[i].x = x;
 		triangleVectices[i].y = (float)std::rand() / RAND_MAX;
 	}
+	*/
 
 	std::clock_t begin = std::clock();
 
@@ -109,13 +106,13 @@ void ChartView::GLRenderCb(Evas_Object *obj)
 	glGenBuffers(1, &vbo);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof triangleVectices, triangleVectices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof buffer, buffer, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
 	glEnableVertexAttribArray(Instance().AttrPosition());
 	glVertexAttribPointer(Instance().AttrPosition(), 2, GL_FLOAT, GL_FALSE, 0, 0);
 
-	glDrawArrays(GL_LINE_STRIP, 0, ARRAY_SIZE(triangleVectices));
+	glDrawArrays(GL_LINE_STRIP, 0, ARRAY_SIZE(buffer));
 
 	glDisableVertexAttribArray(Instance().AttrPosition());
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -184,7 +181,6 @@ Evas_Object *ChartView::CreateContent(Evas_Object *parent) {
 
 ChartView::ChartView()
 {
-
 }
 
 ChartView::~ChartView()
@@ -198,5 +194,14 @@ ChartView &ChartView::Instance()
 	return instance;
 }
 
+utils::Point *ChartView::Buffer()
+{
+       	return buffer;
+}
+
+unsigned ChartView::BufferSize()
+{
+	return sizeof(buffer)/sizeof(buffer[0]);
+}
 
 } //namespace view

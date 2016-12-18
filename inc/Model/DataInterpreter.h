@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "Utils/Point.h"
+
 namespace model {
 
 	class DataInterpreter {
@@ -9,10 +11,14 @@ namespace model {
 		DataInterpreter();
 		virtual ~DataInterpreter();
 
-		std::vector<float> &Interpret(const char *data);
-	private:
-		std::vector<float> buffer_;
+		void SetBuffer(utils::Point *buffer, unsigned size);
+		utils::Point *Buffer() { return buffer_; };
 
+		void Interpret(char *data, int length);
+	private:
+		utils::Point *buffer_ = nullptr;
+		unsigned buffer_size_ = 0;
+		int buffer_idx_ = 0;
 	};
 
 } //namespace model

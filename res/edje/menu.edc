@@ -23,52 +23,11 @@ collections {
 					rel2.offset: 2 2;
 				}
 			}
-			swallow { "btn.voltage.inc";
+			table { "menu.buttons";
 				desc {
-					rel1 { relative: 0.0 0.0; };
-					rel2 { relative: 0.5 0.12; };
+					rel2.relative: 1.0 0.85;
 				}
 			}
-			swallow { "btn.voltage.dec";
-				desc {
-					rel1 { relative: 0.5 0.0; };
-					rel2 { relative: 1.0 0.12; };
-				}
-			}
-			swallow { "btn.time.inc";
-				desc {
-					rel1 { relative: 0.0 0.12; };
-					rel2 { relative: 0.5 0.24; };
-				}
-			}
-			swallow { "btn.time.dec";
-				desc {
-					rel1 { relative: 0.5 0.12; };
-					rel2 { relative: 1.0 0.24; };
-				}
-			}
-			swallow { "btn.auto";
-				desc {
-					rel1 { relative: 0.0 0.24; };
-					rel2 { relative: 1.0 0.36; };
-				}
-			}
-			swallow { "btn.ch";
-				desc {
-					rel1 { relative: 0.0 0.36; };
-					rel2 { relative: 1.0 0.48; };
-				}
-			}
-			/*
-			group { "btn.movement";
-				source: "MovementButton";
-				desc { "default";
-					min: 200 200;
-					max: 200 200;
-					align: 0.5 1.0;
-				}
-			}
-			*/
 		}
 	}
 
@@ -105,7 +64,7 @@ collections {
 			}
 			program {
 				signal: "mouse,down,*";
-				source: "bg";
+				source: "elm.text";
 				action: STATE_SET "pressed";
 				target: "bg_frame";
 				target: "bg";
@@ -113,7 +72,7 @@ collections {
 			}
 			program {
 				signal: "mouse,clicked,*";
-				source: "bg";
+				source: "elm.text";
 				action: SIGNAL_EMIT "elm,action,click" "";
 			}
 		}

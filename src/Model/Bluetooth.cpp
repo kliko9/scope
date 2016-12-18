@@ -47,9 +47,8 @@ Bluetooth::Bluetooth() {
 			//abort();
 			return;
 		}
-	}
-
-	CreateSocket();
+	} else
+		CreateSocket();
 }
 
 Bluetooth::~Bluetooth() {
@@ -91,28 +90,45 @@ bool Bluetooth::LaunchApp() {
 
 void Bluetooth::BondCreatedCb(int result, bt_device_info_s *device_info, void *user_data) {
 
+	Bluetooth *bt = static_cast<Bluetooth *>(user_data);
+
 	if (device_info != NULL) {
 		DBG("Bonded device info:");
 		DBG("Remote adress: %s", device_info->remote_address);
 		DBG("Remote name: %s", device_info->remote_name);
 		DBG("Is bonded: %d", device_info->is_bonded);
 		DBG("Is connected: %d", device_info->is_connected);
-	} else
+	} else {
 		DBG("No device info");
+		return;
+	}
+
+	if (bt->serverSocketFD == -1) {
+
+		if (!device_info->remote_address) {
+			ERR("Remote address does not exist");
+			return;
+		}
+		DBG("Try to connect to bonded device: %s", device_info->remote_address);
+		int ret = bt_socket_connect_rfcomm(device_info->remote_address, bt->uuid);
+		if (ret != BT_ERROR_NONE)
+			ERR("bt_socket_connect_rfcomm failed[%d]: %s", ret, get_error_message(ret));
+	}
 }
 
 void Bluetooth::AdapterStateChangedCb(int result, bt_adapter_state_e adapterState, void *userData) {
 
 	DBG("");
 
-	/*
-	 * Get state and search for bonded devices
-	 */
-
+	Bluetooth *bt = static_cast<Bluetooth *>(userData);
 	if (result != BT_ERROR_NONE) {
 		ERR("BluetoothAdapterStateChangedCb failed");
 		return;
 	}
+
+	if (adapterState == BT_ADAPTER_ENABLED)
+		bt->CreateSocket();
+
 }
 
 void Bluetooth::SocketConnectionStateChangedCb(int result, bt_socket_connection_state_e state,
@@ -143,24 +159,7 @@ void Bluetooth::SocketConnectionStateChangedCb(int result, bt_socket_connection_
 void Bluetooth::DataReceivedCb(bt_socket_received_data_s *data, void *userData) {
 	Bluetooth *bt = static_cast<Bluetooth *>(userData);
 
-	char text[2000] = {0, };
-	int size = sizeof(text)/sizeof(text[0]);
-
-	DBG("Received data: %s", data->data);
-
-	//char reply[] = "Data received\n";
-	std::srand(std::time(NULL));
-	for (int i = 0; i < size/2; i += 2) {
-
-		int val = std::rand() % 4096 - 2048;
-
-		text[i] = (((val & (0x03FF << 6)) >> 6) | (1 << 7)) & ~(1 << 6);
-		text[i+1] = ((val & 0x03FF) | (1 << 7)) | (1 << 6);
-	}
-
-	//bt_socket_send_data(bt->serverSocketFD, reply, sizeof(reply));
-	//bt->EmitSignal(SignalType::BT_SIGNAL_DATA_RECEIVED, data->data);
-	bt->EmitSignal(SignalType::BT_SIGNAL_DATA_RECEIVED, text);
+	bt->EmitSignal(SignalType::BT_SIGNAL_DATA_RECEIVED, data);
 }
 
 bool Bluetooth::CreateSocket() {

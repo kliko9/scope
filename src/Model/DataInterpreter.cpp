@@ -1,10 +1,12 @@
 #include "Model/DataInterpreter.h"
+#include "Log.h"
 
 #define IS_DATA_VALID(x) (x != '\0')
 #define IS_DATA_FRAME_1(x) ((x & (1UL << 6)) == 0)
 #define IS_DATA_FRAME_2(x) ((x & (1UL << 6)))
 
-#define ADC_MAX_VALUE 4096.0 //ADC with 12 bit resolution
+//#define ADC_MAX_VALUE 4096.0 //ADC with 12 bit resolution
+#define ADC_MAX_VALUE 256.0 //ADC with 8 bit resolution
 
 namespace model {
 
@@ -18,33 +20,25 @@ DataInterpreter::~DataInterpreter()
 
 }
 
-std::vector<float> &DataInterpreter::Interpret(const char *data)
+void DataInterpreter::SetBuffer(utils::Point *buffer, unsigned size)
 {
-	int value = 0;
-	buffer_.clear();
+	buffer_ = buffer;
+	buffer_size_ = size;
+}
 
-	while (IS_DATA_VALID(*data) && IS_DATA_VALID(*(data + 1))) {
+void DataInterpreter::Interpret(char *data, int length)
+{
+	unsigned dataIdx = 0;
 
-		if (IS_DATA_FRAME_1(*data))
-			value = ((*data & 0x3F) << 6);
-		else {
-			++data;
-			continue;
-		}
+	while (dataIdx < length) {
+		buffer_[buffer_idx_].y = (float)data[dataIdx++]/ADC_MAX_VALUE;
+		buffer_[buffer_idx_].x = (float)(buffer_idx_ - 500)/(buffer_size_*0.5);
 
-		if (IS_DATA_FRAME_2(*(data + 1)))
-			value |= (*(data + 1) & 0x3F);
-		else {
-			++data;
-			continue;
-		}
+		++buffer_idx_;
 
-		buffer_.push_back(value/ADC_MAX_VALUE);
-		++data;
-		value = 0;
+		buffer_idx_ %= buffer_size_;
+
 	}
-
-	return buffer_;
 }
 
 } //namespace model

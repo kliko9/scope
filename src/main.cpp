@@ -2,6 +2,16 @@
 #include "Log.h"
 #include "Controller/MainController.h"
 
+#include <system_settings.h>
+
+static bool
+callback(int index, const char* value, void *user_data)
+{
+	DBG("VAL: %s", value);
+
+	return true;
+}
+
 static void
 create_base_gui(void)
 {

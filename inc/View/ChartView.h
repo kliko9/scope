@@ -3,6 +3,8 @@
 #include <Elementary_GL_Helpers.h>
 #include <Elementary.h>
 
+#include "Utils/Point.h"
+
 namespace view {
 
 	class ChartView {
@@ -12,10 +14,15 @@ namespace view {
 
 		static ChartView &Instance();
 
-		unsigned short AttrPosition();
+		Evas_Object *CreateContent(Evas_Object *parent);
+
+		unsigned short AttrPosition(); //TODO remove
 		void Viewport(int *w, int *h);
 		void SetViewport(int w, int h);
-		Evas_Object *CreateContent(Evas_Object *parent);
+
+		utils::Point *Buffer();
+		unsigned BufferSize();
+
 
 	private:
 		Evas_Object *gl_view_ = nullptr;
